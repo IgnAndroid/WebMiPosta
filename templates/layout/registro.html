@@ -1,0 +1,71 @@
+{% load static %}
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Mi Posta — Registro</title>
+
+  <!-- CSS -->
+  <link rel="stylesheet" href="{% static 'css/login.css' %}">
+
+  <!-- Bootstrap -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="login-page">
+    <!-- Formulario -->
+    <div class="login-form register-only">
+      <form method="POST" action="{% url 'registro' %}" autocomplete="off">
+        {% csrf_token %}
+        <h2>Crear cuenta</h2>
+        <p>Únete a Mi Posta — conecta con tu comunidad</p>
+
+        {% if messages %}
+          {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+          {% endfor %}
+        {% endif %}
+
+        <label for="username">Nombre de usuario</label>
+        <input id="username" type="text" name="username" required placeholder="Tu nombre de usuario" />
+
+        <label for="first_name">Nombre completo</label>
+        <input id="first_name" type="text" name="first_name" required placeholder="Tu nombre completo" />
+
+        <label for="email">Email</label>
+        <input id="email" type="email" name="email" required placeholder="ejemplo@correo.com" />
+
+        <label for="password">Contraseña</label>
+        <input id="password" type="password" name="password" required minlength="4" placeholder="Mínimo 4 caracteres" />
+
+        <label for="rol">Registrarse como:</label>
+        <select id="rol" name="rol" required class="form-select">
+          <option value="PACIENTE">Paciente</option>
+          <option value="MEDICO">Médico</option>
+        </select>
+
+        <div class="login-options">
+          <a href="{% url 'login' %}">¿Ya tienes cuenta? Inicia sesión</a>
+        </div>
+
+        <button type="submit" class="btn">
+          <span class="btn-text">Registrar</span>
+        </button>
+      </form>
+    </div>
+
+    <!-- Imagen a la derecha -->
+    <div class="login-left" aria-hidden="true">
+      <img src="https://res.cloudinary.com/dxuk9bogw/image/upload/v1764408037/f3f1756c-bdf0-4ef9-a0ef-ee8bb18ae3f7.png" alt="Imagen lateral" />
+    </div>
+
+    <!-- Snackbar -->
+    <div id="snackbar" class="snackbar" aria-live="polite" role="status"></div>
+  </div>
+
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -1,0 +1,427 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel Administrativo - miPosta</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-custom">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="{% url 'admin_dashboard' %}">
+                <i class="fas fa-stethoscope me-2"></i>miPosta Admin
+            </a>
+            
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto me-3">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="{% url 'admin_dashboard' %}">
+                            <i class="fas fa-home me-1"></i>Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">
+                            <i class="fas fa-users me-1"></i>Usuarios
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'listar_citas' %}">
+                            <i class="fas fa-calendar-alt me-1"></i>Citas
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">
+                            <i class="fas fa-hospital me-1"></i>Especialidades
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">
+                            <i class="fas fa-chart-bar me-1"></i>Reportes
+                        </a>
+                    </li>
+                </ul>
+                
+                <div class="dropdown">
+                    <button class="btn btn-login dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                        <i class="fas fa-user-shield me-1"></i>{{ user.username }}
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><a class="dropdown-item" href="#"><i class="fas fa-cog me-2"></i>Configuración</a></li>
+                        <li><a class="dropdown-item" href="#"><i class="fas fa-user me-2"></i>Mi Perfil</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="{% url 'logout' %}"><i class="fas fa-sign-out-alt me-2"></i>Cerrar Sesión</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Dashboard Header -->
+    <section class="dashboard-header">
+        <div class="container-fluid">
+            <div class="row align-items-center">
+                <div class="col-lg-8">
+                    <h1 class="mb-3">
+                        <i class="fas fa-tachometer-alt me-2"></i>
+                        Panel de Administración
+                    </h1>
+                    <p class="lead mb-0">Bienvenido {{ user.username }} - Control total del sistema miPosta</p>
+                </div>
+                <div class="col-lg-4 text-lg-end mt-3 mt-lg-0">
+                    <a href="{% url 'crear_cita' %}" class="btn btn-success-custom btn-lg">
+                        <i class="fas fa-plus-circle me-2"></i>Nueva Cita
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Mensajes del sistema -->
+    {% if messages %}
+    <section class="py-3">
+        <div class="container-fluid">
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                <i class="fas fa-{% if message.tags == 'success' %}check-circle{% elif message.tags == 'error' %}exclamation-circle{% elif message.tags == 'warning' %}exclamation-triangle{% else %}info-circle{% endif %} me-2"></i>
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+
+    <!-- Stats Cards -->
+    <section class="py-4 bg-light-custom">
+        <div class="container-fluid">
+            <div class="row g-4">
+                <div class="col-xl-3 col-lg-6 col-md-6">
+                    <div class="card card-custom h-100">
+                        <div class="card-body text-center p-4">
+                            <div class="stats-card" style="background: linear-gradient(135deg, #3182ce 0%, #2c5282 100%);">
+                                <i class="fas fa-users mb-3" style="font-size: 3rem;"></i>
+                                <div class="stats-number">{{ total_usuarios }}</div>
+                                <div class="stats-label">Total Usuarios</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-xl-3 col-lg-6 col-md-6">
+                    <div class="card card-custom h-100">
+                        <div class="card-body text-center p-4">
+                            <div class="stats-card">
+                                <i class="fas fa-calendar-check mb-3" style="font-size: 3rem;"></i>
+                                <div class="stats-number">{{ total_citas }}</div>
+                                <div class="stats-label">Total Citas</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-xl-3 col-lg-6 col-md-6">
+                    <div class="card card-custom h-100">
+                        <div class="card-body text-center p-4">
+                            <div class="stats-card" style="background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%);">
+                                <i class="fas fa-clock mb-3" style="font-size: 3rem;"></i>
+                                <div class="stats-number">{{ citas_pendientes }}</div>
+                                <div class="stats-label">Citas Pendientes</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-xl-3 col-lg-6 col-md-6">
+                    <div class="card card-custom h-100">
+                        <div class="card-body text-center p-4">
+                            <div class="stats-card" style="background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);">
+                                <i class="fas fa-check-circle mb-3" style="font-size: 3rem;"></i>
+                                <div class="stats-number">{{ citas_confirmadas }}</div>
+                                <div class="stats-label">Citas Confirmadas</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Statistics Overview -->
+    <section class="section-padding">
+        <div class="container-fluid">
+            <div class="row g-4">
+                <!-- User Statistics -->
+                <div class="col-lg-4">
+                    <div class="dashboard-card">
+                        <h5 class="text-primary-custom mb-4">
+                            <i class="fas fa-users-cog me-2"></i>Estadísticas de Usuarios
+                        </h5>
+                        <div class="row text-center">
+                            <div class="col-6 mb-3">
+                                <div class="p-3 rounded" style="background-color: rgba(56, 161, 105, 0.1);">
+                                    <h3 class="text-success-custom mb-1">{{ total_medicos }}</h3>
+                                    <small class="text-muted">Médicos</small>
+                                </div>
+                            </div>
+                            <div class="col-6 mb-3">
+                                <div class="p-3 rounded" style="background-color: rgba(49, 130, 206, 0.1);">
+                                    <h3 class="text-primary-custom mb-1">{{ total_pacientes }}</h3>
+                                    <small class="text-muted">Pacientes</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="d-grid gap-2 mt-3">
+                            <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#nuevoUsuarioModal">
+                                <i class="fas fa-user-plus me-2"></i>Agregar Usuario
+                            </button>
+                            <a href="#" class="btn btn-outline-success">
+                                <i class="fas fa-list me-2"></i>Ver Todos los Usuarios
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="col-lg-4">
+                    <div class="dashboard-card">
+                        <h5 class="text-primary-custom mb-4">
+                            <i class="fas fa-bolt me-2"></i>Acciones Rápidas
+                        </h5>
+                        <div class="d-grid gap-3">
+                            <a href="{% url 'crear_cita' %}" class="btn btn-primary-custom">
+                                <i class="fas fa-calendar-plus me-2"></i>Nueva Cita
+                            </a>
+                            <button class="btn btn-success-custom" data-bs-toggle="modal" data-bs-target="#nuevoUsuarioModal">
+                                <i class="fas fa-user-plus me-2"></i>Nuevo Usuario
+                            </button>
+                            <button class="btn btn-info text-white">
+                                <i class="fas fa-hospital-user me-2"></i>Nueva Especialidad
+                            </button>
+                            <button class="btn btn-warning text-white">
+                                <i class="fas fa-file-download me-2"></i>Generar Reporte
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Activity -->
+                <div class="col-lg-4">
+                    <div class="dashboard-card">
+                        <h5 class="text-primary-custom mb-4">
+                            <i class="fas fa-history me-2"></i>Actividad Reciente
+                        </h5>
+                        <div class="timeline">
+                            <div class="timeline-item mb-3">
+                                <div class="d-flex">
+                                    <div class="flex-shrink-0">
+                                        <div class="rounded-circle bg-success text-white d-flex align-items-center justify-content-center" 
+                                             style="width: 35px; height: 35px;">
+                                            <i class="fas fa-check"></i>
+                                        </div>
+                                    </div>
+                                    <div class="flex-grow-1 ms-3">
+                                        <h6 class="mb-1">Cita Confirmada</h6>
+                                        <small class="text-muted">Hace 5 minutos</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="timeline-item mb-3">
+                                <div class="d-flex">
+                                    <div class="flex-shrink-0">
+                                        <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" 
+                                             style="width: 35px; height: 35px;">
+                                            <i class="fas fa-user"></i>
+                                        </div>
+                                    </div>
+                                    <div class="flex-grow-1 ms-3">
+                                        <h6 class="mb-1">Nuevo Usuario Registrado</h6>
+                                        <small class="text-muted">Hace 15 minutos</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="timeline-item mb-3">
+                                <div class="d-flex">
+                                    <div class="flex-shrink-0">
+                                        <div class="rounded-circle bg-warning text-white d-flex align-items-center justify-content-center" 
+                                             style="width: 35px; height: 35px;">
+                                            <i class="fas fa-calendar"></i>
+                                        </div>
+                                    </div>
+                                    <div class="flex-grow-1 ms-3">
+                                        <h6 class="mb-1">Cita Reagendada</h6>
+                                        <small class="text-muted">Hace 30 minutos</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Recent Appointments Table -->
+    <section class="py-4 bg-light-custom">
+        <div class="container-fluid">
+            <div class="dashboard-card">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h4 class="text-primary-custom mb-0">
+                        <i class="fas fa-calendar-alt me-2"></i>Últimas Citas
+                    </h4>
+                    <a href="{% url 'listar_citas' %}" class="btn btn-outline-primary">
+                        <i class="fas fa-list me-2"></i>Ver Todas
+                    </a>
+                </div>
+
+                {% if ultimas_citas %}
+                <div class="table-responsive">
+                    <table class="table table-hover table-custom">
+                        <thead>
+                            <tr>
+                                <th><i class="fas fa-hashtag me-1"></i>ID</th>
+                                <th><i class="fas fa-calendar me-1"></i>Fecha</th>
+                                <th><i class="fas fa-user me-1"></i>Paciente</th>
+                                <th><i class="fas fa-user-md me-1"></i>Médico</th>
+                                <th><i class="fas fa-stethoscope me-1"></i>Especialidad</th>
+                                <th><i class="fas fa-info-circle me-1"></i>Estado</th>
+                                <th class="text-center"><i class="fas fa-cog me-1"></i>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for cita in ultimas_citas %}
+                            <tr>
+                                <td><strong>#{{ cita.id }}</strong></td>
+                                <td>{{ cita.fecha_hora|date:"d/m/Y H:i" }}</td>
+                                <td>{{ cita.paciente.get_full_name|default:cita.paciente.username }}</td>
+                                <td>Dr. {{ cita.medico.get_full_name|default:cita.medico.username }}</td>
+                                <td>{{ cita.especialidad.nombre }}</td>
+                                <td>
+                                    {% if cita.estado == 'CONFIRMADA' %}
+                                    <span class="badge badge-success-custom">
+                                        <i class="fas fa-check-circle me-1"></i>Confirmada
+                                    </span>
+                                    {% elif cita.estado == 'PENDIENTE' %}
+                                    <span class="badge badge-warning-custom">
+                                        <i class="fas fa-clock me-1"></i>Pendiente
+                                    </span>
+                                    {% elif cita.estado == 'CANCELADA' %}
+                                    <span class="badge badge-danger-custom">
+                                        <i class="fas fa-times-circle me-1"></i>Cancelada
+                                    </span>
+                                    {% else %}
+                                    <span class="badge bg-secondary">{{ cita.get_estado_display }}</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-center">
+                                    <button class="btn btn-sm btn-outline-primary me-1" title="Ver detalles">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-warning me-1" title="Editar">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-danger" title="Eliminar">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="alert alert-info d-flex align-items-center" role="alert">
+                    <i class="fas fa-info-circle me-3 fs-4"></i>
+                    <div>
+                        <strong>No hay citas registradas en el sistema</strong><br>
+                        <small>Comienza agregando la primera cita</small>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </section>
+
+    <!-- Modal Nuevo Usuario -->
+    <div class="modal fade" id="nuevoUsuarioModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header card-header-custom">
+                    <h5 class="modal-title"><i class="fas fa-user-plus me-2"></i>Nuevo Usuario</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form method="POST" action="{% url 'registro' %}">
+                        {% csrf_token %}
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Nombre de Usuario</label>
+                                <input type="text" class="form-control" name="username" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Email</label>
+                                <input type="email" class="form-control" name="email" required>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Contraseña</label>
+                                <input type="password" class="form-control" name="password" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Confirmar Contraseña</label>
+                                <input type="password" class="form-control" name="password_confirm" required>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Rol</label>
+                            <select class="form-control" name="rol" required>
+                                <option value="PACIENTE">Paciente</option>
+                                <option value="MEDICO">Médico</option>
+                                <option value="ADMIN">Administrador</option>
+                            </select>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                            <button type="submit" class="btn btn-success-custom">
+                                <i class="fas fa-save me-1"></i>Crear Usuario
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer-custom">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-md-6">
+                    <p class="text-muted mb-0">
+                        <i class="fas fa-stethoscope me-2"></i>&copy; 2024 miPosta. Todos los derechos reservados.
+                    </p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <small class="text-muted">Panel de Administración v1.0</small>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
