@@ -5,7 +5,7 @@ class Command(BaseCommand):
     help = 'Poblar datos iniciales del sistema'
 
     def handle(self, *args, **kwargs):
-        # ... código anterior de roles y especialidades ...
+        # ... Código anterior de roles y especialidades ...
         
         self.stdout.write('')
         self.stdout.write('Creando usuarios de prueba...')

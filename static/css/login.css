@@ -1,38 +1,18 @@
-/* login.css - versión decorada y mejorada */
-/* Variables */
-:root{
-  --bg: #eef2fb;
-  --card: #ffffff;
-  --accent: #1064ff;
-  --accent-2: #0b5ed7;
-  --muted: #6b7280;
-  --success: #10b981;
-  --danger: #ef4444;
-  --glass: rgba(255,255,255,0.65);
-  --glass-2: rgba(255,255,255,0.85);
-  --shadow-1: 0 8px 30px rgba(2,6,23,0.06);
-  --shadow-2: 0 12px 40px rgba(2,6,23,0.08);
-  --radius: 12px;
-  --max-width-form: 420px;
-  --smooth: cubic-bezier(.16,1,.3,1);
-  --focus-ring: rgba(16,100,255,0.12);
-}
+/* login.css - Importación de estilos principales */
 
-/* Reset básico */
-*{box-sizing:border-box}
-html,body{height:100%;margin:0;font-family:Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;background:var(--bg);color:#111}
-app-root, app-login, .login-page { display:block; }
+/**
+ * Este archivo se mantiene para compatibilidad.
+ * Todos los estilos han sido movidos a astetic.css
+ */
 
-/* Contenedor principal */
-.login-page{
-  display:flex;
-  min-height:100vh;
-  align-items:stretch;
-  justify-content:center;
-  gap:2rem;
-  padding:2rem;
-  position:relative;
-  overflow:hidden;
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import 'astetic.css';
+
+/* Asegurar que el contenedor principal ocupe todo el alto */
+html, body, #root, .app {
+  height: 100%;
+  margin: 0;
+  padding: 0;
 }
 
 /* Decoración global: sutil blobs (no afectan accesibilidad) */
@@ -127,16 +107,25 @@ app-root, app-login, .login-page { display:block; }
 form{
   width:100%;
   max-width:var(--max-width-form);
-  background: linear-gradient(180deg, var(--glass-2), var(--card));
+  background: var(--glass-2);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   border-radius: var(--radius);
-  padding: 40px;
-  box-shadow: var(--shadow-1);
-  border: 1px solid rgba(15,23,42,0.04);
-  position:relative;
-  overflow:visible;
-  transform: translateY(8px);
-  opacity:0;
-  animation: fadeUp .48s var(--smooth) forwards;
+  padding: 2.5rem 2rem 3rem;
+  box-shadow: var(--shadow-2);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  position: relative;
+  z-index: 10;
+  transform: translateY(20px);
+  opacity: 0;
+  animation: fadeInUp 0.8s var(--smooth) forwards;
+  animation-delay: 0.3s;
+  transition: all 0.4s var(--smooth);
+}
+
+.login-form:hover {
+  transform: translateY(-5px) scale(1.01);
+  box-shadow: 0 20px 40px rgba(99, 102, 241, 0.2);
 }
 
 /* Titular + subtítulo */
