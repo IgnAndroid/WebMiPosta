@@ -16,10 +16,9 @@ urlpatterns = [
 
     # Paciente
     path('dashboard/paciente/', views.paciente_dashboard, name='paciente_dashboard'),
-    path('dashboard/paciente/citas/', views.listar_citas, name='paciente_citas'),
+    path('dashboard/paciente/citas/', views.paciente_citas, name='paciente_citas'),
     path('dashboard/paciente/historial_medico/', views.historial_medico, name='paciente_historial'),
-   
-    path('dashboard/paciente/perfil/', views.perfil_paciente, name='paciente_perfil'),
+    path('dashboard/paciente/perfil/', views.perfil_paciente, name='perfil_paciente'),
     
     # Rutas independientes (opcional)
     path('paciente/historial/', views.historial_medico, name='historial_medico'),
