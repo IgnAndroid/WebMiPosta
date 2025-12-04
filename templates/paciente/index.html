@@ -10,8 +10,94 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Custom CSS -->
+    
     <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+
+
+    <style>
+        :root {
+            --success-color: #28a745;
+        }
+        
+
+
+        
+        .btn-success-custom {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            border: none;
+            color: white;
+            transition: transform 0.3s;
+        }
+        
+        .btn-success-custom:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(40,167,69,0.4);
+        }
+        
+        .card-custom {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transition: transform 0.3s;
+        }
+        
+        .card-custom:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+        }
+        
+        .stats-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem;
+            border-radius: 10px;
+        }
+        
+        .stats-number {
+            font-size: 2.5rem;
+            font-weight: bold;
+        }
+        
+        .stats-label {
+            font-size: 1rem;
+            opacity: 0.9;
+        }
+        
+        .section-padding {
+            padding: 4rem 0;
+        }
+        
+
+
+
+        .fab-action.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .fab-label {
+            background: rgba(0,0,0,0.75);
+            color: white;
+            padding: 6px 10px;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            white-space: nowrap;
+            margin-right: 8px;
+        }
+
+        .fab-row {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        @media (max-width: 576px) {
+            .fab-container {
+                right: 0.75rem;
+                bottom: 0.75rem;
+            }
+        }
+    </style>
 </head>
 <body>
     <!-- Navbar -->
@@ -20,11 +106,11 @@
             <a class="navbar-brand" href="{% url 'paciente_dashboard' %}">
                 <i class="fas fa-stethoscope me-2"></i>miPosta
             </a>
-            
+
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
-            
+
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto me-3">
                     <li class="nav-item">
@@ -48,7 +134,8 @@
                         </a>
                     </li>
                 </ul>
-                
+
+                <!-- Usuario -->
                 <div class="dropdown">
                     <button class="btn btn-login dropdown-toggle" type="button" data-bs-toggle="dropdown">
                         <i class="fas fa-user me-1"></i>{{ user.username }}
@@ -59,6 +146,7 @@
                         <li><a class="dropdown-item" href="{% url 'logout' %}"><i class="fas fa-sign-out-alt me-2"></i>Cerrar Sesión</a></li>
                     </ul>
                 </div>
+
             </div>
         </div>
     </nav>
@@ -72,12 +160,11 @@
                         <i class="fas fa-hand-holding-medical me-2"></i>
                         ¡Bienvenido, {{ user.get_full_name|default:user.username }}!
                     </h1>
-                    <p class="lead mb-0">Gestiona tus citas médicas y consulta tu información de salud</p>
                 </div>
                 <div class="col-lg-4 text-lg-end mt-3 mt-lg-0">
-                    <a href="{% url 'crear_cita' %}" class="btn btn-success-custom btn-lg">
+                    <button type="button" class="btn btn-success-custom btn-lg" data-bs-toggle="modal" data-bs-target="#crearCitaModal">
                         <i class="fas fa-plus-circle me-2"></i>Nueva Cita
-                    </a>
+                    </button>
                 </div>
             </div>
         </div>
@@ -116,7 +203,7 @@
     {% endif %}
 
     <!-- Stats Cards -->
-    <section class="section-padding bg-light-custom">
+    <section class="section-padding bg-light">
         <div class="container">
             <div class="row g-4">
                 <div class="col-md-4">
@@ -124,7 +211,7 @@
                         <div class="card-body text-center p-4">
                             <div class="stats-card" style="background: linear-gradient(135deg, #3182ce 0%, #2c5282 100%);">
                                 <i class="fas fa-calendar-check mb-3" style="font-size: 3rem;"></i>
-                                <div class="stats-number">{{ total_citas }}</div>
+                                <div class="stats-number">{{ total_citas|default:0 }}</div>
                                 <div class="stats-label">Total de Citas</div>
                             </div>
                         </div>
@@ -136,7 +223,7 @@
                         <div class="card-body text-center p-4">
                             <div class="stats-card" style="background: linear-gradient(135deg, #38a169 0%, #2f855a 100%);">
                                 <i class="fas fa-clock mb-3" style="font-size: 3rem;"></i>
-                                <div class="stats-number">{{ proximas_citas.count }}</div>
+                                <div class="stats-number">{{ proximas_citas.count|default:0 }}</div>
                                 <div class="stats-label">Citas Próximas</div>
                             </div>
                         </div>
@@ -148,7 +235,7 @@
                         <div class="card-body text-center p-4">
                             <div class="stats-card" style="background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%);">
                                 <i class="fas fa-bell mb-3" style="font-size: 3rem;"></i>
-                                <div class="stats-number">{{ notificaciones.count }}</div>
+                                <div class="stats-number">{{ notificaciones.count|default:0 }}</div>
                                 <div class="stats-label">Notificaciones</div>
                             </div>
                         </div>
@@ -158,13 +245,12 @@
         </div>
     </section>
 
- 
     <!-- Servicios Disponibles -->
     <section class="section-padding">
         <div class="container">
             <div class="row text-center mb-5">
                 <div class="col-12">
-                    <h2 class="text-primary-custom fw-bold mb-3">Servicios Disponibles</h2>
+                    <h2 class="fw-bold mb-3" style="color: #0d6efd;">Servicios Disponibles</h2>
                     <p class="lead text-muted">Atención médica integral para tu bienestar</p>
                 </div>
             </div>
@@ -173,7 +259,7 @@
                 <div class="col-lg-3 col-md-6">
                     <div class="card card-custom h-100">
                         <div class="card-body text-center p-4">
-                            <i class="fas fa-user-md text-primary-custom mb-3" style="font-size: 2.5rem;"></i>
+                            <i class="fas fa-user-md mb-3" style="font-size: 2.5rem; color: #0d6efd;"></i>
                             <h6 class="card-title">Medicina General</h6>
                             <p class="card-text text-muted small">Consultas médicas y chequeos preventivos</p>
                         </div>
@@ -183,7 +269,7 @@
                 <div class="col-lg-3 col-md-6">
                     <div class="card card-custom h-100">
                         <div class="card-body text-center p-4">
-                            <i class="fas fa-syringe text-success-custom mb-3" style="font-size: 2.5rem;"></i>
+                            <i class="fas fa-syringe mb-3" style="font-size: 2.5rem; color: #28a745;"></i>
                             <h6 class="card-title">Vacunación</h6>
                             <p class="card-text text-muted small">Programas de vacunación para todas las edades</p>
                         </div>
@@ -193,7 +279,7 @@
                 <div class="col-lg-3 col-md-6">
                     <div class="card card-custom h-100">
                         <div class="card-body text-center p-4">
-                            <i class="fas fa-baby text-primary-custom mb-3" style="font-size: 2.5rem;"></i>
+                            <i class="fas fa-baby mb-3" style="font-size: 2.5rem; color: #0d6efd;"></i>
                             <h6 class="card-title">Pediatría</h6>
                             <p class="card-text text-muted small">Atención especializada para niños</p>
                         </div>
@@ -203,7 +289,7 @@
                 <div class="col-lg-3 col-md-6">
                     <div class="card card-custom h-100">
                         <div class="card-body text-center p-4">
-                            <i class="fas fa-heartbeat text-success-custom mb-3" style="font-size: 2.5rem;"></i>
+                            <i class="fas fa-heartbeat mb-3" style="font-size: 2.5rem; color: #28a745;"></i>
                             <h6 class="card-title">Cardiología</h6>
                             <p class="card-text text-muted small">Control de enfermedades cardiovasculares</p>
                         </div>
@@ -212,6 +298,80 @@
             </div>
         </div>
     </section>
+
+    <!-- Modal Crear Cita -->
+    <div class="modal fade" id="crearCitaModal" tabindex="-1" aria-labelledby="crearCitaModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white;">
+                    <h5 class="modal-title" id="crearCitaModalLabel">
+                        <i class="fas fa-plus-circle me-2"></i>Nueva Cita Médica
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form method="POST" action="{% url 'crear_cita' %}">
+                    {% csrf_token %}
+                    <div class="modal-body">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="medico" class="form-label">
+                                    <i class="fas fa-user-md me-2 text-primary"></i>Médico *
+                                </label>
+                                <select class="form-select form-select-lg" id="medico" name="medico" required>
+                                    <option value="">Selecciona un médico</option>
+                                    {% for medico in medicos %}
+                                        <option value="{{ medico.id }}">
+                                            Dr. {{ medico.first_name|default:medico.username }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="especialidad" class="form-label">
+                                    <i class="fas fa-stethoscope me-2 text-info"></i>Especialidad
+                                </label>
+                                <select class="form-select form-select-lg" id="especialidad" name="especialidad">
+                                    <option value="">Selecciona una especialidad</option>
+                                    {% for esp in especialidades %}
+                                        <option value="{{ esp.id }}">{{ esp.nombre }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="fecha_hora" class="form-label">
+                                <i class="fas fa-calendar-alt me-2 text-warning"></i>Fecha y Hora *
+                            </label>
+                            <input type="datetime-local" class="form-control form-control-lg" id="fecha_hora" name="fecha_hora" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="motivo" class="form-label">
+                                <i class="fas fa-comment-medical me-2 text-success"></i>Motivo de consulta
+                            </label>
+                            <textarea class="form-control" id="motivo" name="motivo" rows="4" 
+                                      placeholder="Describe brevemente el motivo de tu consulta..."></textarea>
+                        </div>
+                        
+                        <div class="alert alert-info d-flex align-items-center" role="alert">
+                            <i class="fas fa-info-circle me-2 fs-5"></i>
+                            <small>Recibirás una confirmación por correo electrónico una vez que tu cita sea creada</small>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary btn-lg" data-bs-dismiss="modal">
+                            <i class="fas fa-times me-2"></i>Cancelar
+                        </button>
+                        <button type="submit" class="btn btn-success btn-lg">
+                            <i class="fas fa-check me-2"></i>Crear Cita
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 
     <!-- Modal Notificaciones -->
     <div class="modal fade" id="notificacionesModal" tabindex="-1">
@@ -231,12 +391,12 @@
                             <div class="flex-grow-1">
                                 <strong>{{ notif.titulo }}</strong>
                                 <p class="mb-1 small">{{ notif.mensaje }}</p>
-                                <small class="text-muted">{{ notif.fecha_creacion|date:"d/m/Y H:i" }}</small>
+                                <small class="text-muted">{{ notif.creada_en|date:"d/m/Y H:i" }}</small> <!-- <-- corregido -->
                             </div>
                         </div>
                         {% endfor %}
                     {% else %}
-                        <p class="text-center text-muted">No tienes notificaciones pendientes</p>
+                        <p class="text-center text-muted py-4">No tienes notificaciones pendientes</p>
                     {% endif %}
                 </div>
                 <div class="modal-footer">
@@ -255,6 +415,7 @@
                     <p class="text-mutedd">Sistema moderno de gestión de citas médicas diseñado para mejorar la atención sanitaria.</p>
                 </div>
                 
+              
                 <div class="col-lg-4 col-md-6 mb-4">
                     <h5>Enlaces Rápidos</h5>
                     <ul class="list-unstyled">
@@ -287,7 +448,72 @@
         </div>
     </footer>
 
+
+
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        (function () {
+            const fabMain = document.getElementById('fabMain');
+            const fabActions = document.getElementById('fabActions');
+            const actionButtons = fabActions.querySelectorAll('.fab-action');
+
+            let open = false;
+
+            // Initialize: hide action buttons
+            actionButtons.forEach(btn => btn.classList.remove('show'));
+
+            // Toggle actions visibility
+            fabMain.addEventListener('click', () => {
+                open = !open;
+                if (open) {
+                    // stagger the appearance
+                    actionButtons.forEach((btn, i) => {
+                        setTimeout(() => btn.classList.add('show'), i * 45);
+                    });
+                    fabMain.classList.add('active');
+                    fabMain.innerHTML = '<i class="fas fa-times"></i>';
+                } else {
+                    actionButtons.forEach((btn, i) => {
+                        setTimeout(() => btn.classList.remove('show'), i * 25);
+                    });
+                    fabMain.classList.remove('active');
+                    fabMain.innerHTML = '<i class="fas fa-plus"></i>';
+                }
+            });
+
+            // Scroll to top
+            document.getElementById('fabScrollTop').addEventListener('click', (e) => {
+                e.preventDefault();
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            });
+
+            // Close FAB actions when clicking outside
+            document.addEventListener('click', (e) => {
+                const inside = e.target.closest('.fab-container');
+                if (!inside && open) {
+                    open = false;
+                    actionButtons.forEach((btn) => btn.classList.remove('show'));
+                    fabMain.classList.remove('active');
+                    fabMain.innerHTML = '<i class="fas fa-plus"></i>';
+                }
+            });
+
+            // If modal open, optionally close FAB actions to avoid overlap
+            const modals = document.querySelectorAll('.modal');
+            modals.forEach(modalEl => {
+                modalEl.addEventListener('show.bs.modal', () => {
+                    if (open) {
+                        open = false;
+                        actionButtons.forEach((btn) => btn.classList.remove('show'));
+                        fabMain.classList.remove('active');
+                        fabMain.innerHTML = '<i class="fas fa-plus"></i>';
+                    }
+                });
+            });
+        })();
+    </script>
+
 </body>
 </html>

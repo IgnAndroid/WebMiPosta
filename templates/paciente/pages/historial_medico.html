@@ -76,16 +76,11 @@
                 <div class="col-lg-8">
                     <h1 class="mb-3">
                         <i class="fas fa-hand-holding-medical me-2"></i>
-                        ¡Bienvenido, {{ user.get_full_name|default:user.username }}!
+                        Historial Médico
                     </h1>
-                    <p class="lead mb-0">Gestiona tus citas médicas y consulta tu información de salud</p>
+                    <p class="lead mb-0">Consulta tu información de salud</p>
                 </div>
 
-                <div class="col-lg-4 text-lg-end mt-3 mt-lg-0">
-                    <a href="{% url 'crear_cita' %}" class="btn btn-success-custom btn-lg">
-                        <i class="fas fa-plus-circle me-2"></i>Nueva Cita
-                    </a>
-                </div>
 
             </div>
         </div>

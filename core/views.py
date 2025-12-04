@@ -12,7 +12,6 @@ from .models import Usuario, Cita, Especialidad, Notificacion
 logger = logging.getLogger(__name__)
 
 
-
 def index_view(request):
     return render(request, 'index.html')
 
@@ -178,12 +177,40 @@ def paciente_dashboard(request):
         return redirect('login')
 
     mis_citas = Cita.objects.filter(paciente=request.user).order_by('-fecha_hora')
+    
+    notificaciones = (
+    Notificacion.objects
+    .filter(usuario=request.user)
+    .order_by('-creada_en')  # <-- corregido: creada_en (no 'creado_en')
+    )   
 
-    return render(request, 'paciente/index.html', {'mis_citas': mis_citas})
+
+    # Obtener próximas citas
+    ahora = timezone.now()
+    proximas_citas = Cita.objects.filter(
+        paciente=request.user,
+        fecha_hora__gte=ahora,
+        estado='PENDIENTE'
+    ).order_by('fecha_hora')
+    
+    # Datos para el modal de crear cita
+    medicos = Usuario.objects.filter(rol='MEDICO')
+    especialidades = Especialidad.objects.all()
+    
+    context = {
+        'mis_citas': mis_citas,
+        'total_citas': mis_citas.count(),
+        'notificaciones': notificaciones,
+        'proximas_citas': proximas_citas,
+        'medicos': medicos,
+        'especialidades': especialidades,
+    }
+
+    return render(request, 'paciente/index.html', context)
 
 
 # ============================================================
-#                     CRUD DE CITAS (ADMIN)
+#                     CRUD DE CITAS
 # ============================================================
 
 @login_required
@@ -213,7 +240,7 @@ def crear_cita(request):
 
         if not all([medico_id, fecha_hora]):
             messages.error(request, 'Por favor completa los campos obligatorios')
-            return redirect('crear_cita')
+            return redirect('paciente_dashboard')
 
         try:
             medico = Usuario.objects.get(id=medico_id, rol='MEDICO')
@@ -232,20 +259,18 @@ def crear_cita(request):
             )
 
             messages.success(request, 'Cita creada exitosamente')
-            return redirect('listar_citas')
+            return redirect('paciente_dashboard')
 
         except Usuario.DoesNotExist:
             messages.error(request, 'Médico no encontrado')
-            return redirect('crear_cita')
+            return redirect('paciente_dashboard')
+        except Exception as e:
+            logger.exception("Error al crear cita")
+            messages.error(request, f'Error al crear cita: {str(e)}')
+            return redirect('paciente_dashboard')
 
-    medicos = Usuario.objects.filter(rol='MEDICO')
-    especialidades = Especialidad.objects.all()
-
-    return render(
-        request,
-        'admin/CRUD_Citas/crear.html',
-        {'medicos': medicos, 'especialidades': especialidades}
-    )
+    # Si es GET, redirigir al dashboard
+    return redirect('paciente_dashboard')
 
 
 # ============================================================
