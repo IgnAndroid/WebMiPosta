@@ -283,14 +283,32 @@ def paciente_citas(request):
         messages.error(request, 'No tienes permisos para acceder')
         return redirect('login')
 
+    # Todas las citas del paciente
     citas = Cita.objects.filter(paciente=request.user).order_by('-fecha_hora')
+    
+    # Obtener próximas citas (futuras y pendientes)
+    ahora = timezone.now()
+    proximas_citas = Cita.objects.filter(
+        paciente=request.user,
+        fecha_hora__gte=ahora,
+        estado='PENDIENTE'
+    ).order_by('fecha_hora')
+    
+    # Citas pasadas
+    citas_pasadas = Cita.objects.filter(
+        paciente=request.user,
+        fecha_hora__lt=ahora
+    ).order_by('-fecha_hora')
 
     return render(
         request,
         'paciente/pages/mis_citas.html',
-        {'citas': citas}
+        {
+            'citas': citas,
+            'proximas_citas': proximas_citas,
+            'citas_pasadas': citas_pasadas,
+        }
     )
-
 
 @login_required
 def historial_medico(request):
