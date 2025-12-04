@@ -1,0 +1,43 @@
+{% if citas %}
+  <div class="table-responsive">
+    <table class="table table-hover">
+      <thead>
+        <tr>
+          <th>Fecha</th>
+          <th>Hora</th>
+          <th>Paciente</th>
+          <th>Especialidad</th>
+          <th>Estado</th>
+          <th class="text-center">Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for cita in citas %}
+        <tr>
+          <td>{{ cita.fecha_hora|date:"d/m/Y" }}</td>
+          <td>{{ cita.fecha_hora|date:"H:i" }}</td>
+          <td>{{ cita.paciente.get_full_name|default:cita.paciente.username }}</td>
+          <td>{{ cita.especialidad.nombre|default:"-" }}</td>
+          <td>
+            {% if cita.estado == 'PENDIENTE' %}
+              <span class="badge bg-warning text-dark">Pendiente</span>
+            {% elif cita.estado == 'CONFIRMADA' %}
+              <span class="badge bg-success">Confirmada</span>
+            {% else %}
+              <span class="badge bg-secondary">{{ cita.get_estado_display }}</span>
+            {% endif %}
+          </td>
+          <td class="text-center">
+            <a href="{% url 'cita_detail' cita.id %}" class="btn btn-sm btn-outline-primary"><i class="fas fa-eye"></i></a>
+            {% if request.user.rol == 'MEDICO' and cita.estado == 'PENDIENTE' %}
+              <button onclick="marcarAtendida('{{ cita.id }}')" class="btn btn-sm btn-success"><i class="fas fa-check"></i></button>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% else %}
+  <div class="alert alert-info">No hay citas para mostrar.</div>
+{% endif %}
