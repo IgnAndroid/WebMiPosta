@@ -12,12 +12,19 @@ from .models import Usuario, Cita, Especialidad, Notificacion
 logger = logging.getLogger(__name__)
 
 
-# CONTROLADOR: Login
+
+def index_view(request):
+    return render(request, 'index.html')
+
+
+# ============================================================
+#                      AUTENTICACIÓN
+# ============================================================
+
 @never_cache
 @csrf_protect
 def login_view(request):
     if request.user.is_authenticated:
-        # Redirigir según el rol
         if request.user.rol == 'ADMIN':
             return redirect('admin_dashboard')
         elif request.user.rol == 'MEDICO':
@@ -39,7 +46,6 @@ def login_view(request):
             login(request, user)
             messages.success(request, f'Bienvenido {user.first_name or user.username}')
 
-            # Redirigir según el rol
             if user.rol == 'ADMIN':
                 return redirect('admin_dashboard')
             elif user.rol == 'MEDICO':
@@ -48,12 +54,10 @@ def login_view(request):
                 return redirect('paciente_dashboard')
         else:
             messages.error(request, 'Usuario o contraseña incorrectos')
-            return render(request, 'layout/login.html')
 
     return render(request, 'layout/login.html')
 
 
-# CONTROLADOR: Logout
 @login_required
 def logout_view(request):
     username = request.user.username
@@ -62,15 +66,12 @@ def logout_view(request):
     return redirect('login')
 
 
-# CONTROLADOR: Registro
 @never_cache
 @csrf_protect
 def registro_view(request):
-    # Si el usuario ya está autenticado, redirigir
     if request.user.is_authenticated:
         return redirect('paciente_dashboard')
 
-    # Valores que se devolverán a la plantilla en caso de error
     form_data = {
         'username': '',
         'first_name': '',
@@ -86,7 +87,6 @@ def registro_view(request):
         password_confirm = request.POST.get('password_confirm', '')
         rol = request.POST.get('rol', 'PACIENTE')
 
-        # Guardar los valores recibidos para devolverlos si hay error
         form_data.update({
             'username': username,
             'first_name': first_name,
@@ -94,10 +94,6 @@ def registro_view(request):
             'rol': rol,
         })
 
-        # Log para depuración (NO incluir contraseñas en logs en producción)
-        logger.debug("POST /registro/ data: %s", {k: v for k, v in request.POST.items() if k not in ['password', 'password_confirm']})
-
-        # Validaciones
         if not all([username, first_name, email, password, password_confirm]):
             messages.error(request, 'Por favor completa todos los campos')
             return render(request, 'layout/registro.html', {'form': form_data})
@@ -110,7 +106,6 @@ def registro_view(request):
             messages.error(request, 'La contraseña debe tener al menos 8 caracteres')
             return render(request, 'layout/registro.html', {'form': form_data})
 
-        # Verificar si el usuario ya existe
         if Usuario.objects.filter(username=username).exists():
             messages.error(request, 'El nombre de usuario ya está en uso')
             return render(request, 'layout/registro.html', {'form': form_data})
@@ -120,7 +115,6 @@ def registro_view(request):
             return render(request, 'layout/registro.html', {'form': form_data})
 
         try:
-            # Crear usuario (asumiendo que Usuario.objects.create_user maneja hashing)
             user = Usuario.objects.create_user(
                 username=username,
                 email=email,
@@ -128,22 +122,23 @@ def registro_view(request):
                 rol=rol,
                 first_name=first_name
             )
-            messages.success(request, 'Usuario registrado exitosamente. ¡Ahora puedes iniciar sesión!')
+            messages.success(request, 'Usuario registrado exitosamente. Ahora puedes iniciar sesión.')
             return redirect('login')
         except Exception as e:
             logger.exception("Error al crear usuario")
             messages.error(request, f'Error al registrar usuario: {str(e)}')
-            return render(request, 'layout/registro.html', {'form': form_data})
 
-    # GET request
     return render(request, 'layout/registro.html', {'form': form_data})
 
 
-# CONTROLADOR: Dashboard Admin
+# ============================================================
+#                      DASHBOARDS
+# ============================================================
+
 @login_required
 def admin_dashboard(request):
-    if getattr(request.user, 'rol', None) != 'ADMIN':
-        messages.error(request, 'No tienes permisos para acceder a esta página')
+    if request.user.rol != 'ADMIN':
+        messages.error(request, 'No tienes permisos para acceder')
         return redirect('login')
 
     context = {
@@ -151,18 +146,15 @@ def admin_dashboard(request):
         'total_citas': Cita.objects.count(),
         'citas_pendientes': Cita.objects.filter(estado='PENDIENTE').count(),
     }
-    # plantilla: templates/admin/index.html
     return render(request, 'admin/index.html', context)
 
 
-# CONTROLADOR: Dashboard Médico
 @login_required
 def medico_dashboard(request):
-    if getattr(request.user, 'rol', None) != 'MEDICO':
-        messages.error(request, 'No tienes permisos para acceder a esta página')
+    if request.user.rol != 'MEDICO':
+        messages.error(request, 'No tienes permisos para acceder')
         return redirect('login')
 
-    # Obtener citas de hoy usando fecha_hora
     hoy_inicio = timezone.now().replace(hour=0, minute=0, second=0, microsecond=0)
     hoy_fin = hoy_inicio + timezone.timedelta(days=1)
 
@@ -176,27 +168,24 @@ def medico_dashboard(request):
         'citas_hoy': citas_hoy,
         'total_citas': Cita.objects.filter(medico=request.user).count(),
     }
-    # plantilla: templates/medico/index.html
     return render(request, 'medico/index.html', context)
 
 
-# CONTROLADOR: Dashboard Paciente
 @login_required
 def paciente_dashboard(request):
-    if getattr(request.user, 'rol', None) != 'PACIENTE':
-        messages.error(request, 'No tienes permisos para acceder a esta página')
+    if request.user.rol != 'PACIENTE':
+        messages.error(request, 'No tienes permisos para acceder')
         return redirect('login')
 
     mis_citas = Cita.objects.filter(paciente=request.user).order_by('-fecha_hora')
 
-    context = {
-        'mis_citas': mis_citas,
-    }
-    # plantilla: templates/paciente/index.html
-    return render(request, 'paciente/index.html', context)
+    return render(request, 'paciente/index.html', {'mis_citas': mis_citas})
 
 
-# CONTROLADOR: Listar Citas
+# ============================================================
+#                     CRUD DE CITAS (ADMIN)
+# ============================================================
+
 @login_required
 def listar_citas(request):
     if request.user.rol == 'ADMIN':
@@ -206,14 +195,10 @@ def listar_citas(request):
     else:
         citas = Cita.objects.filter(paciente=request.user)
 
-    context = {
-        'citas': citas.order_by('-fecha_hora')
-    }
-    # plantilla: templates/admin/CRUD_Citas/listar.html (según tu árbol de templates)
+    context = {'citas': citas.order_by('-fecha_hora')}
     return render(request, 'admin/CRUD_Citas/listar.html', context)
 
 
-# CONTROLADOR: Crear Cita
 @login_required
 def crear_cita(request):
     if request.user.rol != 'PACIENTE':
@@ -227,21 +212,17 @@ def crear_cita(request):
         motivo = request.POST.get('motivo', '').strip()
 
         if not all([medico_id, fecha_hora]):
-            messages.error(request, 'Por favor completa todos los campos obligatorios')
+            messages.error(request, 'Por favor completa los campos obligatorios')
             return redirect('crear_cita')
 
         try:
             medico = Usuario.objects.get(id=medico_id, rol='MEDICO')
 
-            # Obtener especialidad si se proporciona
             especialidad = None
             if especialidad_id:
-                try:
-                    especialidad = Especialidad.objects.get(id=especialidad_id)
-                except Especialidad.DoesNotExist:
-                    especialidad = None
+                especialidad = Especialidad.objects.filter(id=especialidad_id).first()
 
-            cita = Cita.objects.create(
+            Cita.objects.create(
                 paciente=request.user,
                 medico=medico,
                 especialidad=especialidad,
@@ -252,21 +233,66 @@ def crear_cita(request):
 
             messages.success(request, 'Cita creada exitosamente')
             return redirect('listar_citas')
+
         except Usuario.DoesNotExist:
             messages.error(request, 'Médico no encontrado')
             return redirect('crear_cita')
-        except Exception as e:
-            logger.exception("Error al crear cita")
-            messages.error(request, f'Error al crear cita: {str(e)}')
-            return redirect('crear_cita')
 
-    # GET request
     medicos = Usuario.objects.filter(rol='MEDICO')
     especialidades = Especialidad.objects.all()
 
-    context = {
-        'medicos': medicos,
-        'especialidades': especialidades,
-    }
-    # plantilla: templates/admin/CRUD_Citas/crear.html
-    return render(request, 'admin/CRUD_Citas/crear.html', context)
+    return render(
+        request,
+        'admin/CRUD_Citas/crear.html',
+        {'medicos': medicos, 'especialidades': especialidades}
+    )
+
+
+# ============================================================
+#                 SECCIONES DEL PACIENTE
+# ============================================================
+
+@login_required
+def paciente_citas(request):
+    if request.user.rol != 'PACIENTE':
+        messages.error(request, 'No tienes permisos para acceder')
+        return redirect('login')
+
+    citas = Cita.objects.filter(paciente=request.user).order_by('-fecha_hora')
+
+    return render(
+        request,
+        'paciente/pages/mis_citas.html',
+        {'citas': citas}
+    )
+
+
+@login_required
+def historial_medico(request):
+    if request.user.rol != 'PACIENTE':
+        messages.error(request, 'No tienes permisos para acceder')
+        return redirect('login')
+
+    historial = Cita.objects.filter(
+        paciente=request.user,
+        estado='ATENDIDA'
+    ).order_by('-fecha_hora')
+
+    return render(
+        request,
+        'paciente/pages/historial_medico.html',
+        {'historial': historial}
+    )
+
+
+@login_required
+def perfil_paciente(request):
+    if request.user.rol != 'PACIENTE':
+        messages.error(request, 'No tienes permisos para acceder')
+        return redirect('login')
+
+    return render(
+        request,
+        'paciente/pages/perfil.html',
+        {'usuario': request.user}
+    )
