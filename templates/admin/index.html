@@ -16,7 +16,7 @@
 <body>
     <!-- Navbar -->
     <nav class="navbar navbar-expand-lg navbar-custom">
-        <div class="container-fluid">
+        <div class="container">
             <a class="navbar-brand" href="{% url 'admin_dashboard' %}">
                 <i class="fas fa-stethoscope me-2"></i>miPosta Admin
             </a>
@@ -33,22 +33,22 @@
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#">
+                        <a class="nav-link" href="{% url 'admin_usuarios' %}">
                             <i class="fas fa-users me-1"></i>Usuarios
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{% url 'listar_citas' %}">
+                        <a class="nav-link" href="{% url 'admin_citas' %}">
                             <i class="fas fa-calendar-alt me-1"></i>Citas
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#">
+                        <a class="nav-link" href="{% url 'admin_especialidades' %}">
                             <i class="fas fa-hospital me-1"></i>Especialidades
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#">
+                        <a class="nav-link" href="{% url 'admin_reportes' %}">
                             <i class="fas fa-chart-bar me-1"></i>Reportes
                         </a>
                     </li>
@@ -70,7 +70,7 @@
 
     <!-- Dashboard Header -->
     <section class="dashboard-header">
-        <div class="container-fluid">
+        <div class="container">
             <div class="row align-items-center">
                 <div class="col-lg-8">
                     <h1 class="mb-3">
@@ -78,12 +78,7 @@
                         Panel de Administración
                     </h1>
                     <p class="lead mb-0">Bienvenido {{ user.username }} - Control total del sistema miPosta</p>
-                </div>
-                <div class="col-lg-4 text-lg-end mt-3 mt-lg-0">
-                    <a href="{% url 'crear_cita' %}" class="btn btn-success-custom btn-lg">
-                        <i class="fas fa-plus-circle me-2"></i>Nueva Cita
-                    </a>
-                </div>
+               
             </div>
         </div>
     </section>
@@ -105,7 +100,7 @@
 
     <!-- Stats Cards -->
     <section class="py-4 bg-light-custom">
-        <div class="container-fluid">
+        <div class="container">
             <div class="row g-4">
                 <div class="col-xl-3 col-lg-6 col-md-6">
                     <div class="card card-custom h-100">
@@ -159,9 +154,9 @@
     </section>
 
     <!-- Statistics Overview -->
-    <section class="section-padding">
-        <div class="container-fluid">
-            <div class="row g-4">
+    <section class="section-padding1 ">
+        <div class="container">
+            <div class="row">
                 <!-- User Statistics -->
                 <div class="col-lg-4">
                     <div class="dashboard-card">
@@ -200,9 +195,6 @@
                             <i class="fas fa-bolt me-2"></i>Acciones Rápidas
                         </h5>
                         <div class="d-grid gap-3">
-                            <a href="{% url 'crear_cita' %}" class="btn btn-primary-custom">
-                                <i class="fas fa-calendar-plus me-2"></i>Nueva Cita
-                            </a>
                             <button class="btn btn-success-custom" data-bs-toggle="modal" data-bs-target="#nuevoUsuarioModal">
                                 <i class="fas fa-user-plus me-2"></i>Nuevo Usuario
                             </button>
@@ -274,7 +266,7 @@
 
     <!-- Recent Appointments Table -->
     <section class="py-4 bg-light-custom">
-        <div class="container-fluid">
+        <div class="container">
             <div class="dashboard-card">
                 <div class="d-flex justify-content-between align-items-center mb-4">
                     <h4 class="text-primary-custom mb-0">
@@ -406,15 +398,27 @@
 
     <!-- Footer -->
     <footer class="footer-custom">
-        <div class="container-fluid">
+        <div class="container">
             <div class="row">
-                <div class="col-md-6">
-                    <p class="text-muted mb-0">
-                        <i class="fas fa-stethoscope me-2"></i>&copy; 2024 miPosta. Todos los derechos reservados.
-                    </p>
+                <div class="col-lg-4 col-md-6 mb-4">
+                    <h5><i class="fas fa-stethoscope me-2"></i>miPosta</h5>
+                    <p class="text-mutedd">Sistema moderno de gestión de citas médicas.</p>
                 </div>
-                <div class="col-md-6 text-md-end">
-                    <small class="text-muted">Panel de Administración v1.0</small>
+                <div class="col-lg-4 col-md-6 mb-4">
+ 
+                </div>
+                <div class="col-lg-4 col-md-6 mb-4">
+                    <h5>Contacto</h5>
+                    <ul class="list-unstyled">
+                        <li class="mb-2"><i class="fas fa-phone me-2"></i>(01) 234-5678</li>
+                        <li class="mb-2"><i class="fas fa-envelope me-2"></i>info@miposta.com</li>
+                    </ul>
+                </div>
+            </div>
+            <hr class="my-4" style="opacity: 0.3;">
+            <div class="row">
+                <div class="col-12 text-center">
+                    <p class="text-mutedd mb-0">&copy; 2024 miPosta. Todos los derechos reservados.</p>
                 </div>
             </div>
         </div>

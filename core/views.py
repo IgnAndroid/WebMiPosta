@@ -5,8 +5,11 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.views.decorators.cache import never_cache
 from django.views.decorators.csrf import csrf_protect
+from django.views.decorators.http import require_POST
 from django.utils import timezone
+from django.http import JsonResponse
 from datetime import timedelta
+from django.core.paginator import Paginator
 import json
 
 
@@ -151,6 +154,7 @@ def admin_dashboard(request):
     return render(request, 'admin/index.html', context)
 
 
+
 @login_required
 def medico_dashboard(request):
     if request.user.rol != 'MEDICO':
@@ -180,9 +184,10 @@ def medico_dashboard(request):
     total_citas = Cita.objects.filter(medico=request.user).count()
     citas_pendientes = Cita.objects.filter(medico=request.user, estado='PENDIENTE').count()
     
-    # Total de pacientes únicos atendidos
+    # Total de pacientes únicos atendidos (solo citas COMPLETADAS o ATENDIDAS)
     total_pacientes = Cita.objects.filter(
-        medico=request.user
+        medico=request.user,
+        estado__in=['COMPLETADA', 'ATENDIDA']  # Múltiples estados
     ).values('paciente').distinct().count()
 
     context = {
@@ -412,24 +417,161 @@ def perfil_paciente(request):
 
 @login_required
 def medico_mis_citas(request):
+    """Vista principal de citas del médico con paginación y filtros"""
     if request.user.rol != 'MEDICO':
         messages.error(request, 'No tienes permisos para acceder')
         return redirect('login')
 
-    # Todas las citas del médico
-    citas = Cita.objects.filter(medico=request.user).order_by('-fecha_hora')
+    # Obtener todas las citas del médico
+    citas = Cita.objects.filter(medico=request.user).select_related('paciente', 'especialidad').order_by('-fecha_hora')
     
-    # Filtros por estado
-    estado = request.GET.get('estado', '')
-    if estado:
-        citas = citas.filter(estado=estado)
+    # Filtro por estado (opcional)
+    estado_filtro = request.GET.get('estado', '')
+    if estado_filtro:
+        citas = citas.filter(estado=estado_filtro)
+    
+    # Paginación (10 citas por página)
+    paginator = Paginator(citas, 10)
+    page_number = request.GET.get('page', 1)
+    mis_citas = paginator.get_page(page_number)
 
     context = {
-        'citas': citas,
+        'mis_citas': mis_citas,
         'total_citas': citas.count(),
+        'estado_filtro': estado_filtro,
     }
     return render(request, 'medico/pages/mis_citas.html', context)
 
+
+@login_required
+def medico_cita_detail(request, pk):
+    """Vista de detalle de una cita específica"""
+    if request.user.rol != 'MEDICO':
+        messages.error(request, 'No tienes permisos para acceder')
+        return redirect('login')
+    
+    cita = get_object_or_404(Cita, pk=pk, medico=request.user)
+    
+    context = {
+        'cita': cita,
+    }
+    return render(request, 'medico/pages/cita_detail.html', context)
+
+
+@login_required
+@require_POST
+def medico_confirmar_cita(request, pk):
+    """Confirmar una cita (PENDIENTE -> CONFIRMADA)"""
+    if request.user.rol != 'MEDICO':
+        return JsonResponse({'success': False, 'error': 'Sin permisos'}, status=403)
+    
+    try:
+        cita = get_object_or_404(Cita, pk=pk, medico=request.user)
+        
+        if cita.estado != 'PENDIENTE':
+            return JsonResponse({
+                'success': False, 
+                'error': 'Solo se pueden confirmar citas pendientes'
+            }, status=400)
+        
+        cita.estado = 'CONFIRMADA'
+        cita.save()
+        
+        logger.info(f"Cita {pk} confirmada por médico {request.user.username}")
+        return JsonResponse({'success': True, 'message': 'Cita confirmada exitosamente'})
+        
+    except Exception as e:
+        logger.exception(f"Error al confirmar cita {pk}")
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+
+
+@login_required
+@require_POST
+def medico_cancelar_cita(request, pk):
+    """Cancelar una cita"""
+    if request.user.rol != 'MEDICO':
+        return JsonResponse({'success': False, 'error': 'Sin permisos'}, status=403)
+    
+    try:
+        cita = get_object_or_404(Cita, pk=pk, medico=request.user)
+        
+        if cita.estado == 'COMPLETADA':
+            return JsonResponse({
+                'success': False, 
+                'error': 'No se puede cancelar una cita completada'
+            }, status=400)
+        
+        cita.estado = 'CANCELADA'
+        cita.save()
+        
+        logger.info(f"Cita {pk} cancelada por médico {request.user.username}")
+        return JsonResponse({'success': True, 'message': 'Cita cancelada exitosamente'})
+        
+    except Exception as e:
+        logger.exception(f"Error al cancelar cita {pk}")
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+
+@login_required
+@require_POST
+def medico_completar_cita(request, pk):
+    """Marcar una cita como completada/atendida"""
+    if request.user.rol != 'MEDICO':
+        return JsonResponse({'success': False, 'error': 'Sin permisos'}, status=403)
+    
+    try:
+        cita = get_object_or_404(Cita, pk=pk, medico=request.user)
+        
+        if cita.estado == 'CANCELADA':
+            return JsonResponse({
+                'success': False, 
+                'error': 'No se puede completar una cita cancelada'
+            }, status=400)
+        
+        cita.estado = 'COMPLETADA'
+        cita.save()
+        
+        logger.info(f"Cita {pk} completada por médico {request.user.username}")
+        return JsonResponse({'success': True, 'message': 'Cita marcada como completada'})
+        
+    except Exception as e:
+        logger.exception(f"Error al completar cita {pk}")
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+@login_required
+@require_POST
+def medico_cambiar_estado_cita(request, pk):
+    """Cambiar estado de una cita a cualquier estado válido"""
+    if request.user.rol != 'MEDICO':
+        return JsonResponse({'success': False, 'error': 'Sin permisos'}, status=403)
+    
+    try:
+        cita = get_object_or_404(Cita, pk=pk, medico=request.user)
+        nuevo_estado = request.POST.get('estado', '').strip().upper()
+        
+        # Validar que el estado sea válido
+        estados_validos = ['PENDIENTE', 'CONFIRMADA', 'CANCELADA', 'COMPLETADA', 'ATENDIDA']
+        if nuevo_estado not in estados_validos:
+            return JsonResponse({
+                'success': False, 
+                'error': f'Estado inválido. Debe ser uno de: {", ".join(estados_validos)}'
+            }, status=400)
+        
+        estado_anterior = cita.estado
+        cita.estado = nuevo_estado
+        cita.save()
+        
+        logger.info(f"Cita {pk} cambió de {estado_anterior} a {nuevo_estado} por {request.user.username}")
+        return JsonResponse({
+            'success': True, 
+            'message': f'Estado cambiado a {nuevo_estado}',
+            'nuevo_estado': nuevo_estado
+        })
+        
+    except Exception as e:
+        logger.exception(f"Error al cambiar estado de cita {pk}")
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
 
 @login_required
 def medico_mis_pacientes(request):
@@ -675,3 +817,84 @@ def medico_horario(request):
         "today": ahora,
     }
     return render(request, 'medico/pages/mi_horario.html', context)
+
+# ---------------------------------------------------------
+# Secciones de administración (renderizan las plantillas)
+# ---------------------------------------------------------
+
+@login_required
+def admin_usuarios(request):
+    """
+    Vista para la sección 'admin/usuarios/'.
+    Muestra la lista de usuarios y renderiza admin/pages/usuarios.html
+    """
+    if getattr(request.user, 'rol', None) != 'ADMIN':
+        messages.error(request, 'No tienes permisos para acceder a esta sección')
+        return redirect('login')
+
+    usuarios = Usuario.objects.all().order_by('username')
+    context = {
+        'usuarios': usuarios,
+        'total_usuarios': usuarios.count(),
+    }
+    return render(request, 'admin/pages/usuarios.html', context)
+
+
+@login_required
+def admin_citas(request):
+    """
+    Vista para la sección 'admin/citas/'.
+    Muestra las citas y renderiza admin/pages/citas.html
+    """
+    if getattr(request.user, 'rol', None) != 'ADMIN':
+        messages.error(request, 'No tienes permisos para acceder a esta sección')
+        return redirect('login')
+
+    citas = Cita.objects.select_related('paciente', 'medico', 'especialidad').order_by('-fecha_hora')
+    context = {
+        'citas': citas,
+        'total_citas': citas.count(),
+    }
+    return render(request, 'admin/pages/citas.html', context)
+
+
+@login_required
+def admin_especialidades(request):
+    """
+    Vista para la sección 'admin/especialidades/'.
+    Muestra las especialidades y renderiza admin/pages/especialidades.html
+    """
+    if getattr(request.user, 'rol', None) != 'ADMIN':
+        messages.error(request, 'No tienes permisos para acceder a esta sección')
+        return redirect('login')
+
+    especialidades = Especialidad.objects.all().order_by('nombre')
+    context = {
+        'especialidades': especialidades,
+        'total_especialidades': especialidades.count(),
+    }
+    return render(request, 'admin/pages/especialidades.html', context)
+
+
+@login_required
+def admin_reportes(request):
+    """
+    Vista para la sección 'admin/reportes/'.
+    Prepara algunos KPIs básicos y renderiza admin/pages/reportes.html.
+    Puedes ampliar este contexto con consultas más complejas o series para gráficas.
+    """
+    if getattr(request.user, 'rol', None) != 'ADMIN':
+        messages.error(request, 'No tienes permisos para acceder a esta sección')
+        return redirect('login')
+
+    total_usuarios = Usuario.objects.count()
+    total_citas = Cita.objects.count()
+    total_especialidades = Especialidad.objects.count()
+
+    # Ejemplo simple de datos para usar en la plantilla (puedes expandir)
+    context = {
+        'total_usuarios': total_usuarios,
+        'total_citas': total_citas,
+        'total_especialidades': total_especialidades,
+    }
+    return render(request, 'admin/pages/reportes.html', context)

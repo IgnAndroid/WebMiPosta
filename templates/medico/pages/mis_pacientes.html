@@ -12,6 +12,10 @@
   <link rel="stylesheet" href="{% static 'css/styles.css' %}">
 
   <style>
+     html, body { height: 100%; margin: 0; }
+    body { display: flex; flex-direction: column; min-height: 100vh; background-color: #f4f7fb; }
+    main, .section-padding { flex: 1 0 auto; }
+
     /* Estilos específicos manteniendo la paleta del proyecto */
     .patient-card { border-radius: 12px; }
     .avatar { width:56px;height:56px;display:flex;align-items:center;justify-content:center;border-radius:50%;font-size:20px; }
@@ -111,17 +115,6 @@
               </div>
             </div>
 
-            <hr class="my-3">
-
-            <div class="d-flex justify-content-between">
-              {# Resolver URL de detalle de paciente de forma segura (no lanzar NoReverseMatch) #}
-              {% url 'medico_paciente_detail' p.id as paciente_url %}
-              <a href="{{ paciente_url|default:'#' }}" class="btn btn-sm btn-outline-secondary">Ver Ficha</a>
-
-              {# Resolver URL de agendar de forma segura #}
-              {% url 'medico_agendar' p.id as agendar_url %}
-              <a href="{{ agendar_url|default:'#' }}" class="btn btn-sm btn-primary">Agendar</a>
-            </div>
           </article>
         </div>
         {% endfor %}

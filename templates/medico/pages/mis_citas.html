@@ -10,41 +10,188 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="{% static 'css/styles.css' %}">
 
-    <style>
-        /* FIX: eliminar línea/espacio blanco debajo del footer y pegar footer al fondo */
-        html, body {
-        height: 100%;
-        margin: 0; /* quita el margen por defecto del body */
-        }
+  <style>
+    html, body {
+      height: 100%;
+      margin: 0;
+    }
 
-        body {
-        display: flex;
-        flex-direction: column;
-        min-height: 100vh; /* asegura que el body siempre ocupe toda la ventana */
-        background-color: #f4f7fb; /* ajusta al color de fondo de tu layout (opcional) */
-        }
+    body {
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      background-color: #f4f7fb;
+    }
 
-        /* Haz que el contenido principal empuje el footer hacia abajo */
-        main, .content, .section-padding {
-        flex: 1 0 auto;
-        }
+    main, .content, .section-padding {
+      flex: 1 0 auto;
+    }
 
-        /* Asegura que el footer no tenga margen inferior y ocupe el ancho */
-        .footer-custom {
-        margin-top: auto;
-        color: #ffffff;
-        width: 100%;
-        padding-top: 2.5rem;
-        padding-bottom: 2.5rem;
-        box-sizing: border-box;
-        }
+    .footer-custom {
+      margin-top: auto;
+      color: #ffffff;
+      width: 100%;
+      padding-top: 2.5rem;
+      padding-bottom: 2.5rem;
+      box-sizing: border-box;
+    }
 
-        /* Si existe un <hr> en el footer que genera separación visual, controla su estilo */
-        .footer-custom hr {
-        margin: 1.5rem 0;
-        border: none;
-        }    
-</style>
+    .footer-custom hr {
+      margin: 1.5rem 0;
+      border: none;
+    }
+
+    /* Estilos para badges de estado */
+    .badge-custom {
+      padding: 0.5rem 0.75rem;
+      font-size: 0.875rem;
+      font-weight: 500;
+    }
+
+    /* Dropdown de acciones */
+    .action-dropdown {
+      position: relative;
+    }
+
+    .action-dropdown .dropdown-menu {
+      min-width: 220px;
+      max-width: 280px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      border: 1px solid rgba(0,0,0,0.1);
+      z-index: 1050;
+      position: absolute !important;
+      right: 0;
+      left: auto !important;
+      transform: none !important;
+    }
+
+    .action-dropdown .dropdown-item {
+      padding: 0.75rem 1.25rem;
+      cursor: pointer;
+      transition: background-color 0.2s;
+      font-size: 0.9rem;
+      white-space: nowrap;
+      display: flex;
+      align-items: center;
+    }
+
+    .action-dropdown .dropdown-item:hover {
+      background-color: #f8f9fa;
+    }
+
+    .action-dropdown .dropdown-item i {
+      width: 20px;
+      text-align: center;
+      margin-right: 10px;
+      font-size: 0.9rem;
+      flex-shrink: 0;
+    }
+
+    .action-dropdown .btn {
+      min-width: 50px;
+    }
+
+    /* Asegurar que el dropdown no se corte */
+    .table-responsive {
+      overflow: visible !important;
+    }
+
+    .card-custom {
+      overflow: visible !important;
+    }
+
+    /* Permitir scroll solo en X, no en Y */
+    .table-wrapper {
+      overflow-x: auto;
+      overflow-y: visible !important;
+    }
+
+    /* Asegurar que la última columna permita el dropdown */
+    .table-custom td:last-child {
+      overflow: visible !important;
+    }
+
+    .table-custom {
+      overflow: visible !important;
+    }
+
+    /* Para las últimas filas, el dropdown se abre hacia arriba si es necesario */
+    tbody tr:nth-last-child(-n+3) .dropdown-menu {
+      bottom: 100%;
+      top: auto !important;
+      margin-bottom: 0.125rem;
+    }
+
+    /* Tabla responsive mejorada */
+    .table-custom {
+      font-size: 0.9rem;
+      white-space: nowrap;
+    }
+
+    .table-custom th {
+      font-weight: 600;
+      color: #495057;
+      border-bottom: 2px solid #dee2e6;
+      white-space: nowrap;
+    }
+
+    .table-custom td {
+      vertical-align: middle;
+    }
+
+    .card-custom {
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      overflow: visible !important;
+    }
+
+    /* Container para tabla con scroll horizontal pero dropdown visible */
+    .table-wrapper {
+      overflow-x: auto;
+      overflow-y: visible;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    /* Ajustes responsivos */
+    @media (max-width: 768px) {
+      .table-wrapper {
+        overflow-x: scroll;
+      }
+    }
+
+    /* Hacer la tabla responsive en móviles */
+    @media (max-width: 992px) {
+      .table-custom {
+        font-size: 0.85rem;
+      }
+      
+      .table-custom td, .table-custom th {
+        padding: 0.5rem;
+      }
+    }
+
+    /* Ajustar columnas para que no se corten */
+    .table-custom td:nth-child(1) { min-width: 100px; }
+    .table-custom td:nth-child(2) { min-width: 180px; }
+    .table-custom td:nth-child(3) { min-width: 150px; max-width: 250px; white-space: normal; }
+    .table-custom td:nth-child(4) { min-width: 120px; }
+    .table-custom td:nth-child(5) { 
+      min-width: 80px; 
+      text-align: right;
+      position: relative;
+    }
+
+    /* Espaciado adicional después de la tabla para dropdowns de últimas filas */
+    .table-container {
+      padding-bottom: 250px;
+      margin-bottom: -250px;
+      overflow: visible !important;
+    }
+
+    .bg-white.rounded.shadow-sm.card-custom {
+      margin-bottom: 3rem;
+    }
+  </style>
 </head>
 <body>
   <!-- Navbar -->
@@ -86,10 +233,10 @@
       <div class="row align-items-center">
         <div class="col-lg-8">
           <h1 class="mb-1"><i class="fas fa-calendar-alt me-2"></i>Mis Citas</h1>
-          <p class="lead mb-0">Lista completa de citas — filtra y administra con un solo clic.</p>
+          <p class="lead mb-0">Gestiona el estado de tus citas médicas</p>
         </div>
         <div class="col-lg-4 text-lg-end mt-3 mt-lg-0">
-          <a href="{% url 'medico_mis_citas' %}" class="btn btn-outline-light">Actualizar</a>
+          <span class="badge bg-primary fs-6">Total: {{ total_citas }}</span>
         </div>
       </div>
     </div>
@@ -98,72 +245,124 @@
   <!-- Main -->
   <div class="section-padding">
     <div class="container">
-      <div class="d-flex justify-content-between align-items-center mb-3">
-        <div class="d-flex gap-2 w-75">
-          <input id="q" class="form-control form-control-sm" placeholder="Buscar paciente, motivo..." aria-label="Buscar citas">
-          <select id="filtroEstado" class="form-select form-select-sm w-auto" aria-label="Filtrar por estado">
-            <option value="">Todos</option>
-            <option value="PENDIENTE">Pendiente</option>
-            <option value="CONFIRMADA">Confirmada</option>
-            <option value="CANCELADA">Cancelada</option>
-            <option value="COMPLETADA">Completada</option>
+      <!-- Filtros -->
+      <div class="row mb-3">
+        <div class="col-md-8">
+          <input id="q" class="form-control" placeholder="🔍 Buscar por paciente, motivo..." aria-label="Buscar citas">
+        </div>
+        <div class="col-md-4 mt-2 mt-md-0">
+          <select id="filtroEstado" class="form-select" aria-label="Filtrar por estado">
+            <option value="">📋 Todos los estados</option>
+            <option value="PENDIENTE">⏳ Pendiente</option>
+            <option value="CONFIRMADA">✅ Confirmada</option>
+            <option value="COMPLETADA">✔️ Completada/Atendida</option>
+            <option value="CANCELADA">❌ Cancelada</option>
           </select>
         </div>
-        <div>
-          <a href="{% url 'medico_mis_citas' %}" class="btn btn-outline-primary btn-sm">Recargar</a>
+      </div>
+
+      <!-- Tabla de Citas -->
+      {% if mis_citas %}
+      <div class="bg-white rounded shadow-sm card-custom p-3">
+        <div class="table-container">
+          <table class="table table-hover align-middle mb-0 table-custom">
+            <thead>
+              <tr>
+                <th style="min-width: 100px;">Fecha / Hora</th>
+                <th style="min-width: 180px;">Paciente</th>
+                <th style="min-width: 150px;">Motivo</th>
+                <th style="min-width: 120px;">Estado</th>
+                <th class="text-end" style="min-width: 100px;">Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="citasBody">
+              {% for cita in mis_citas %}
+              <tr data-estado="{{ cita.estado }}" data-id="{{ cita.id }}">
+                <td>
+                  <strong>{{ cita.fecha_hora|date:"d/m/Y" }}</strong>
+                  <br>
+                  <small class="text-muted">{{ cita.fecha_hora|date:"H:i" }}</small>
+                </td>
+                <td>
+                  <strong>{{ cita.paciente.get_full_name|default:cita.paciente.username }}</strong>
+                  {% if cita.paciente.telefono %}
+                  <br><small class="text-muted"><i class="fas fa-phone"></i> {{ cita.paciente.telefono }}</small>
+                  {% endif %}
+                </td>
+                <td>{{ cita.motivo|truncatewords:15|default:"Sin motivo especificado" }}</td>
+                <td>
+                  <span class="badge badge-custom estado-badge
+                    {% if cita.estado == 'PENDIENTE' %}bg-warning text-dark
+                    {% elif cita.estado == 'CONFIRMADA' %}bg-info
+                    {% elif cita.estado == 'COMPLETADA' or cita.estado == 'ATENDIDA' %}bg-success
+                    {% elif cita.estado == 'CANCELADA' %}bg-secondary
+                    {% else %}bg-primary
+                    {% endif %}">
+                    {% if cita.estado == 'PENDIENTE' %}⏳ Pendiente
+                    {% elif cita.estado == 'CONFIRMADA' %}✅ Confirmada
+                    {% elif cita.estado == 'COMPLETADA' %}✔️ Completada
+                    {% elif cita.estado == 'ATENDIDA' %}✔️ Atendida
+                    {% elif cita.estado == 'CANCELADA' %}❌ Cancelada
+                    {% else %}{{ cita.estado }}
+                    {% endif %}
+                  </span>
+                </td>
+                <td class="text-end">
+                  <div class="btn-group action-dropdown">
+                    <button type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
+                      <i class="fas fa-ellipsis-v"></i>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                      <li>
+                        <a class="dropdown-item" href="{% url 'medico_cita_detail' cita.id %}">
+                          <i class="fas fa-eye text-primary"></i> Ver Detalle
+                        </a>
+                      </li>
+                      <li><hr class="dropdown-divider"></li>
+                      
+                      {% if cita.estado == 'PENDIENTE' %}
+                      <li>
+                        <a class="dropdown-item action-btn" data-action="confirmar">
+                          <i class="fas fa-check text-info"></i> Confirmar Cita
+                        </a>
+                      </li>
+                      {% endif %}
+                      
+                      {% if cita.estado == 'CONFIRMADA' or cita.estado == 'PENDIENTE' %}
+                      <li>
+                        <a class="dropdown-item action-btn" data-action="completar">
+                          <i class="fas fa-check-double text-success"></i> Marcar Atendida
+                        </a>
+                      </li>
+                      {% endif %}
+                      
+                      {% if cita.estado != 'COMPLETADA' and cita.estado != 'CANCELADA' %}
+                      <li>
+                        <a class="dropdown-item action-btn" data-action="cancelar">
+                          <i class="fas fa-times text-danger"></i> Cancelar Cita
+                        </a>
+                      </li>
+                      {% endif %}
+                      
+                      <li><hr class="dropdown-divider"></li>
+                      <li>
+                        <a class="dropdown-item action-btn" data-action="cambiar-estado">
+                          <i class="fas fa-sync text-warning"></i> Cambiar Estado
+                        </a>
+                      </li>
+                    </ul>
+                  </div>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
         </div>
       </div>
 
-      {% if mis_citas %}
-      <div class="table-responsive bg-white rounded shadow-sm p-3 card-custom">
-        <table class="table table-hover align-middle mb-0">
-          <thead>
-            <tr>
-              <th>Fecha / Hora</th>
-              <th>Paciente</th>
-              <th>Motivo</th>
-              <th>Estado</th>
-              <th class="text-end">Acciones</th>
-            </tr>
-          </thead>
-          <tbody id="citasBody">
-            {% for cita in mis_citas %}
-            <tr data-estado="{{ cita.estado }}">
-              <td>
-                <strong>{{ cita.fecha_hora|date:"d/m/Y" }}</strong>
-                <br>
-                <small class="text-muted">{{ cita.fecha_hora|date:"H:i" }}</small>
-              </td>
-              <td>{{ cita.paciente.get_full_name|default:cita.paciente.username }}</td>
-              <td>{{ cita.motivo|truncatewords:10 }}</td>
-              <td>
-                {% if cita.estado == 'PENDIENTE' %}
-                  <span class="badge bg-warning">Pendiente</span>
-                {% elif cita.estado == 'CONFIRMADA' %}
-                  <span class="badge bg-success">Confirmada</span>
-                {% elif cita.estado == 'CANCELADA' %}
-                  <span class="badge bg-secondary">Cancelada</span>
-                {% else %}
-                  <span class="badge bg-info">{{ cita.estado }}</span>
-                {% endif %}
-              </td>
-              <td class="text-end">
-                <a href="{% url 'medico_cita_detail' cita.id %}" class="btn btn-sm btn-outline-secondary action-btn" title="Ver"><i class="fas fa-eye"></i></a>
-
-                {% if cita.estado == 'PENDIENTE' %}
-                  <button type="button" class="btn btn-sm btn-success action-btn" data-id="{{ cita.id }}" data-action="confirm" title="Confirmar"><i class="fas fa-check"></i></button>
-                  <button type="button" class="btn btn-sm btn-danger action-btn" data-id="{{ cita.id }}" data-action="cancel" title="Cancelar"><i class="fas fa-times"></i></button>
-                {% endif %}
-              </td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
-
-      <!-- Paginación (si tu queryset está paginado) -->
+      <!-- Paginación -->
       {% if mis_citas.has_other_pages %}
-      <div class="mt-3 d-flex justify-content-end">
+      <div class="mt-3 d-flex justify-content-center">
         <nav aria-label="Paginación de citas">
           <ul class="pagination mb-0">
             {% if mis_citas.has_previous %}
@@ -171,7 +370,11 @@
             {% else %}
               <li class="page-item disabled"><span class="page-link">Anterior</span></li>
             {% endif %}
-            <li class="page-item disabled"><span class="page-link">Página {{ mis_citas.number }} de {{ mis_citas.paginator.num_pages }}</span></li>
+            
+            <li class="page-item disabled">
+              <span class="page-link">Página {{ mis_citas.number }} de {{ mis_citas.paginator.num_pages }}</span>
+            </li>
+            
             {% if mis_citas.has_next %}
               <li class="page-item"><a class="page-link" href="?page={{ mis_citas.next_page_number }}">Siguiente</a></li>
             {% else %}
@@ -183,53 +386,79 @@
       {% endif %}
 
       {% else %}
-      <div class="alert alert-info">No hay citas registradas.</div>
+      <div class="alert alert-info">
+        <i class="fas fa-info-circle"></i> No hay citas registradas.
+      </div>
       {% endif %}
     </div>
-</div>
+  </div>
 
-
-
-    <!-- Footer -->
-    <footer class="footer-custom">
-        <div class="container">
-            <div class="row">
-                <div class="col-lg-4 col-md-6 mb-4">
-                    <h5><i class="fas fa-stethoscope me-2"></i>miPosta</h5>
-                    <p class="text-mutedd">Sistema moderno de gestión de citas médicas.</p>
-                </div>
-                <div class="col-lg-4 col-md-6 mb-4">
-                    <h5>Enlaces Rápidos</h5>
-                    <ul class="list-unstyled">
-                        <li class="mb-2"><a href="{% url 'medico_mis_citas' %}">Mis Citas</a></li>
-                        <li class="mb-2"><a href="{% url 'medico_mis_pacientes' %}">Mis Pacientes</a></li>
-                        <li class="mb-2"><a href="{% url 'medico_horario' %}">Mi Horario</a></li>
-                    </ul>
-                </div>
-                <div class="col-lg-4 col-md-6 mb-4">
-                    <h5>Contacto</h5>
-                    <ul class="list-unstyled">
-                        <li class="mb-2"><i class="fas fa-phone me-2"></i>(01) 234-5678</li>
-                        <li class="mb-2"><i class="fas fa-envelope me-2"></i>info@miposta.com</li>
-                    </ul>
-                </div>
-            </div>
-            <hr class="my-4" style="opacity: 0.3;">
-            <div class="row">
-                <div class="col-12 text-center">
-                    <p class="text-mutedd mb-0">&copy; 2024 miPosta. Todos los derechos reservados.</p>
-                </div>
-            </div>
+  <!-- Modal para cambiar estado -->
+  <div class="modal fade" id="cambiarEstadoModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title"><i class="fas fa-sync me-2"></i>Cambiar Estado de Cita</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
-    </footer>
+        <div class="modal-body">
+          <input type="hidden" id="modalCitaId">
+          <div class="mb-3">
+            <label class="form-label">Nuevo Estado:</label>
+            <select id="modalNuevoEstado" class="form-select">
+              <option value="PENDIENTE">⏳ Pendiente</option>
+              <option value="CONFIRMADA">✅ Confirmada</option>
+              <option value="COMPLETADA">✔️ Completada/Atendida</option>
+              <option value="CANCELADA">❌ Cancelada</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="button" class="btn btn-primary" id="btnGuardarEstado">Guardar Cambios</button>
+        </div>
+      </div>
+    </div>
+  </div>
 
-
+  <!-- Footer -->
+  <footer class="footer-custom">
+    <div class="container">
+      <div class="row">
+        <div class="col-lg-4 col-md-6 mb-4">
+          <h5><i class="fas fa-stethoscope me-2"></i>miPosta</h5>
+          <p class="text-mutedd">Sistema moderno de gestión de citas médicas.</p>
+        </div>
+        <div class="col-lg-4 col-md-6 mb-4">
+          <h5>Enlaces Rápidos</h5>
+          <ul class="list-unstyled">
+            <li class="mb-2"><a href="{% url 'medico_mis_citas' %}">Mis Citas</a></li>
+            <li class="mb-2"><a href="{% url 'medico_mis_pacientes' %}">Mis Pacientes</a></li>
+            <li class="mb-2"><a href="{% url 'medico_horario' %}">Mi Horario</a></li>
+          </ul>
+        </div>
+        <div class="col-lg-4 col-md-6 mb-4">
+          <h5>Contacto</h5>
+          <ul class="list-unstyled">
+            <li class="mb-2"><i class="fas fa-phone me-2"></i>(01) 234-5678</li>
+            <li class="mb-2"><i class="fas fa-envelope me-2"></i>info@miposta.com</li>
+          </ul>
+        </div>
+      </div>
+      <hr class="my-4" style="opacity: 0.3;">
+      <div class="row">
+        <div class="col-12 text-center">
+          <p class="text-mutedd mb-0">&copy; 2024 miPosta. Todos los derechos reservados.</p>
+        </div>
+      </div>
+    </div>
+  </footer>
 
   <!-- Scripts -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
   <script>
-    // Obtener CSRF token desde cookie (Django)
+    // Obtener CSRF token
     function getCookie(name) {
       const cookies = document.cookie ? document.cookie.split(';') : [];
       for (let i = 0; i < cookies.length; i++) {
@@ -242,48 +471,92 @@
     }
     const csrftoken = getCookie('csrftoken');
 
-    // Delegación para botones confirmar/cancelar
+    // Variables globales
+    let currentCitaId = null;
+    const modalCambiarEstado = new bootstrap.Modal(document.getElementById('cambiarEstadoModal'));
+
+    // Delegación de eventos para acciones
     document.addEventListener('click', function (e) {
-      const btn = e.target.closest('button[data-action]');
-      if (!btn) return;
+      const actionBtn = e.target.closest('.action-btn');
+      if (!actionBtn) return;
 
-      const id = btn.getAttribute('data-id');
-      const action = btn.getAttribute('data-action'); // 'confirm' | 'cancel'
-      if (!id || !action) return;
+      const action = actionBtn.getAttribute('data-action');
+      const row = actionBtn.closest('tr');
+      const citaId = row ? row.getAttribute('data-id') : null;
 
-      const confirmMsg = action === 'confirm' ? '¿Confirmar esta cita?' : '¿Cancelar esta cita?';
+      if (!citaId) return;
+
+      currentCitaId = citaId;
+
+      if (action === 'cambiar-estado') {
+        // Abrir modal para cambiar estado
+        document.getElementById('modalCitaId').value = citaId;
+        modalCambiarEstado.show();
+      } else if (action === 'confirmar') {
+        cambiarEstadoCita(citaId, 'confirmar', '¿Confirmar esta cita?');
+      } else if (action === 'completar') {
+        cambiarEstadoCita(citaId, 'completar', '¿Marcar esta cita como atendida?');
+      } else if (action === 'cancelar') {
+        cambiarEstadoCita(citaId, 'cancelar', '¿Cancelar esta cita?');
+      }
+    });
+
+    // Guardar cambio de estado desde modal
+    document.getElementById('btnGuardarEstado').addEventListener('click', function() {
+      const citaId = document.getElementById('modalCitaId').value;
+      const nuevoEstado = document.getElementById('modalNuevoEstado').value;
+      
+      if (!citaId || !nuevoEstado) return;
+
+      fetch(`/medico/citas/${citaId}/cambiar-estado/`, {
+        method: 'POST',
+        headers: {
+          'X-CSRFToken': csrftoken,
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: `estado=${nuevoEstado}`
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          modalCambiarEstado.hide();
+          location.reload();
+        } else {
+          alert(data.error || 'Error al cambiar el estado');
+        }
+      })
+      .catch(err => {
+        console.error(err);
+        alert('Error al procesar la solicitud');
+      });
+    });
+
+    // Función para cambiar estado
+    function cambiarEstadoCita(citaId, endpoint, confirmMsg) {
       if (!confirm(confirmMsg)) return;
 
-      const endpoint = action === 'confirm' ? 'confirmar' : 'cancelar';
-      const url = `/medico/citas/${id}/${endpoint}/`;
-
-      fetch(url, {
+      fetch(`/medico/citas/${citaId}/${endpoint}/`, {
         method: 'POST',
         headers: {
           'X-CSRFToken': csrftoken,
           'Accept': 'application/json'
         }
       })
-      .then(response => {
-        if (!response.ok) throw new Error('Network response not ok');
-        // try to parse json, but some endpoints might not return body
-        return response.json().catch(()=>({success: true}));
-      })
+      .then(response => response.json())
       .then(data => {
-        if (data && data.success === false) {
-          alert(data.error || 'Ocurrió un error al procesar la petición');
-        } else {
-          // reload para reflejar cambios
+        if (data.success) {
           location.reload();
+        } else {
+          alert(data.error || 'Error al procesar la solicitud');
         }
       })
       .catch(err => {
         console.error(err);
-        alert('Ocurrió un error al procesar la petición');
+        alert('Error al procesar la solicitud');
       });
-    });
+    }
 
-    // Búsqueda y filtro cliente (mejor experiencia)
+    // Búsqueda y filtro en tiempo real
     (function () {
       const qInput = document.getElementById('q');
       const filtroEstado = document.getElementById('filtroEstado');
