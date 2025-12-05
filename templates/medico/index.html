@@ -33,17 +33,17 @@
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{% url 'listar_citas' %}">
+                        <a class="nav-link" href="{% url 'medico_mis_citas' %}">
                             <i class="fas fa-calendar-alt me-1"></i>Mis Citas
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#">
+                        <a class="nav-link" href="{% url 'medico_mis_pacientes' %}">
                             <i class="fas fa-user-injured me-1"></i>Mis Pacientes
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#">
+                        <a class="nav-link" href="{% url 'medico_horario' %}">
                             <i class="fas fa-clock me-1"></i>Mi Horario
                         </a>
                     </li>
@@ -54,8 +54,7 @@
                         <i class="fas fa-user-md me-1"></i>Dr. {{ user.get_full_name|default:user.username }}
                     </button>
                     <ul class="dropdown-menu dropdown-menu-end">
-                        <li><a class="dropdown-item" href="#"><i class="fas fa-user me-2"></i>Mi Perfil</a></li>
-                        <li><a class="dropdown-item" href="#"><i class="fas fa-chart-line me-2"></i>Estadísticas</a></li>
+                        <li><a class="dropdown-item" href="{% url 'medico_perfil' %}"><i class="fas fa-user me-2"></i>Mi Perfil</a></li>
                         <li><hr class="dropdown-divider"></li>
                         <li><a class="dropdown-item" href="{% url 'logout' %}"><i class="fas fa-sign-out-alt me-2"></i>Cerrar Sesión</a></li>
                     </ul>
@@ -154,231 +153,142 @@
         </div>
     </section>
 
-    <!-- Main Content -->
+<!-- Main Content -->
     <section class="section-padding">
         <div class="container">
             <div class="row">
                 <!-- Citas de Hoy -->
                 <div class="col-lg-8">
-                    <div class="dashboard-card">
-                        <div class="d-flex justify-content-between align-items-center mb-4">
-                            <h4 class="text-primary-custom mb-0">
-                                <i class="fas fa-calendar-day me-2"></i>Citas de Hoy
-                            </h4>
-                            <div class="btn-group" role="group">
-                                <button class="btn btn-outline-primary btn-sm active">Hoy</button>
-                                <button class="btn btn-outline-primary btn-sm">Mañana</button>
-                                <button class="btn btn-outline-primary btn-sm">Semana</button>
+                    <div class="card card-custom">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <h4 class="text-primary mb-0">
+                                    <i class="fas fa-calendar-day me-2"></i>Citas de Hoy
+                                </h4>
+                                <span class="badge bg-primary">{{ citas_hoy.count }} cita{{ citas_hoy.count|pluralize:"s" }}</span>
                             </div>
-                        </div>
-                        
-                        {% if citas_hoy %}
-                        <div class="table-responsive">
-                            <table class="table table-hover table-custom">
-                                <thead>
-                                    <tr>
-                                        <th><i class="fas fa-clock me-1"></i>Hora</th>
-                                        <th><i class="fas fa-user me-1"></i>Paciente</th>
-                                        <th><i class="fas fa-notes-medical me-1"></i>Motivo</th>
-                                        <th><i class="fas fa-info-circle me-1"></i>Estado</th>
-                                        <th class="text-center"><i class="fas fa-cog me-1"></i>Acciones</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for cita in citas_hoy %}
-                                    <tr {% if cita.estado == 'PENDIENTE' %}class="table-warning"{% endif %}>
-                                        <td><strong>{{ cita.fecha_hora|date:"H:i" }}</strong></td>
-                                        <td>
-                                            <div class="d-flex align-items-center">
-                                                <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-2" 
-                                                     style="width: 35px; height: 35px; font-weight: bold;">
-                                                    {{ cita.paciente.username.0|upper }}
-                                                </div>
-                                                <div>
-                                                    <strong>{{ cita.paciente.get_full_name|default:cita.paciente.username }}</strong><br>
-                                                    <small class="text-muted">DNI: {{ cita.paciente.dni|default:"N/A" }}</small>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td>{{ cita.motivo|default:"Sin especificar"|truncatewords:5 }}</td>
-                                        <td>
-                                            {% if cita.estado == 'CONFIRMADA' %}
-                                            <span class="badge badge-success-custom">
-                                                <i class="fas fa-check-circle me-1"></i>Confirmada
-                                            </span>
-                                            {% elif cita.estado == 'PENDIENTE' %}
-                                            <span class="badge badge-warning-custom">
-                                                <i class="fas fa-clock me-1"></i>Siguiente
-                                            </span>
-                                            {% elif cita.estado == 'ATENDIDA' %}
-                                            <span class="badge-success-custom">
-                                                <i class="fas fa-check-double me-1"></i>Atendida
-                                            </span>
-                                            {% else %}
-                                            <span class="badge bg-secondary">{{ cita.get_estado_display }}</span>
-                                            {% endif %}
-                                        </td>
-                                        <td class="text-center">
-                                            {% if cita.estado == 'PENDIENTE' %}
-                                            <button class="btn btn-sm btn-success-custom me-1" 
-                                                    onclick="marcarAtendida('{{ cita.id }}')" 
-                                                    title="Atender">
-                                                <i class="fas fa-check me-1"></i>Atender
-                                            </button>
-                                            {% else %}
-                                            <button class="btn btn-sm btn-outline-primary me-1" 
-                                                    data-bs-toggle="modal" 
-                                                    data-bs-target="#historialModal{{ cita.id }}"
-                                                    title="Ver historial">
-                                                <i class="fas fa-file-medical"></i>
-                                            </button>
-                                            {% endif %}
-                                        </td>
-                                    </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-                        </div>
-                        {% else %}
-                        <div class="alert alert-info d-flex align-items-center" role="alert">
-                            <i class="fas fa-info-circle me-3 fs-4"></i>
-                            <div>
-                                <strong>No tienes citas programadas para hoy</strong><br>
-                                <small>Revisa tu agenda para los próximos días</small>
+                            
+                            {% if citas_hoy %}
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Hora</th>
+                                            <th>Paciente</th>
+                                            <th>Motivo</th>
+                                            <th>Estado</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for cita in citas_hoy %}
+                                        <tr>
+                                            <td><strong>{{ cita.fecha_hora|date:"H:i" }}</strong></td>
+                                            <td>{{ cita.paciente.first_name|default:cita.paciente.username }}</td>
+                                            <td>{{ cita.motivo|truncatewords:5 }}</td>
+                                            <td>
+                                                {% if cita.estado == 'PENDIENTE' %}
+                                                    <span class="badge bg-warning">Pendiente</span>
+                                                {% elif cita.estado == 'CONFIRMADA' %}
+                                                    <span class="badge bg-success">Confirmada</span>
+                                                {% else %}
+                                                    <span class="badge bg-secondary">{{ cita.estado }}</span>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
                             </div>
+                            {% else %}
+                            <div class="alert alert-info d-flex align-items-center" role="alert">
+                                <i class="fas fa-info-circle me-3 fs-4"></i>
+                                <div>
+                                    <strong>No tienes citas programadas para hoy</strong><br>
+                                    <small>Revisa tu agenda para los próximos días</small>
+                                </div>
+                            </div>
+                            {% endif %}
                         </div>
-                        {% endif %}
                     </div>
 
                     <!-- Próximas Citas -->
-                    <div class="dashboard-card mt-4">
-                        <h4 class="text-primary-custom mb-4">
-                            <i class="fas fa-calendar-week me-2"></i>Próximas Citas
-                        </h4>
-                        
-                        {% if mis_citas %}
-                        <div class="table-responsive">
-                            <table class="table table-hover">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th>Fecha</th>
-                                        <th>Paciente</th>
-                                        <th>Especialidad</th>
-                                        <th>Estado</th>
-                                        <th>Acciones</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for cita in mis_citas %}
-                                    <tr>
-                                        <td>{{ cita.fecha_hora|date:"d/m/Y H:i" }}</td>
-                                        <td>{{ cita.paciente.get_full_name|default:cita.paciente.username }}</td>
-                                        <td>{{ cita.especialidad.nombre }}</td>
-                                        <td>
-                                            {% if cita.estado == 'CONFIRMADA' %}
-                                            <span class="badge badge-success-custom">Confirmada</span>
-                                            {% elif cita.estado == 'PENDIENTE' %}
-                                            <span class="badge badge-warning-custom">Pendiente</span>
-                                            {% else %}
-                                            <span class="badge bg-secondary">{{ cita.get_estado_display }}</span>
-                                            {% endif %}
-                                        </td>
-                                        <td>
-                                            <button class="btn btn-sm btn-outline-primary" title="Ver detalles">
-                                                <i class="fas fa-eye"></i>
-                                            </button>
-                                        </td>
-                                    </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
+                    <div class="card card-custom mt-4">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <h4 class="text-primary mb-0">
+                                    <i class="fas fa-calendar-week me-2"></i>Próximas Citas
+                                </h4>
+                                <a href="{% url 'medico_mis_citas' %}" class="btn btn-sm btn-outline-primary">
+                                    Ver todas <i class="fas fa-arrow-right ms-1"></i>
+                                </a>
+                            </div>
+                            
+                            {% if proximas_citas %}
+                            <div class="list-group list-group-flush">
+                                {% for cita in proximas_citas %}
+                                <div class="list-group-item">
+                                    <div class="d-flex w-100 justify-content-between align-items-center">
+                                        <div>
+                                            <h6 class="mb-1">
+                                                <i class="fas fa-user me-2 text-primary"></i>
+                                                {{ cita.paciente.first_name|default:cita.paciente.username }}
+                                            </h6>
+                                            <small class="text-muted">
+                                                <i class="fas fa-calendar me-1"></i>
+                                                {{ cita.fecha_hora|date:"d/m/Y" }} a las {{ cita.fecha_hora|date:"H:i" }}
+                                            </small>
+                                        </div>
+                                        <span class="badge bg-warning">{{ cita.estado }}</span>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            {% else %}
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle me-2"></i>
+                                No tienes citas próximas programadas
+                            </div>
+                            {% endif %}
                         </div>
-                        <div class="text-center mt-3">
-                            <a href="{% url 'listar_citas' %}" class="btn btn-outline-primary">
-                                <i class="fas fa-list me-2"></i>Ver Todas las Citas
-                            </a>
-                        </div>
-                        {% else %}
-                        <div class="alert alert-info">No tienes citas próximas programadas</div>
-                        {% endif %}
                     </div>
                 </div>
 
-                <!-- Sidebar - Herramientas y Stats -->
+               <!-- Sidebar - Herramientas -->
                 <div class="col-lg-4">
-                    <!-- Herramientas Médicas -->
-                    <div class="dashboard-card">
-                        <h4 class="text-primary-custom mb-4">
-                            <i class="fas fa-medical-kit me-2"></i>Herramientas Médicas
-                        </h4>
-                        
-                        <div class="d-grid gap-3">
-                            <button class="btn btn-primary-custom" data-bs-toggle="modal" data-bs-target="#recetaModal">
-                                <i class="fas fa-prescription me-2"></i>Nueva Receta
-                            </button>
-                            <button class="btn btn-success-custom" data-bs-toggle="modal" data-bs-target="#notaModal">
-                                <i class="fas fa-notes-medical me-2"></i>Nota Médica
-                            </button>
-                            <button class="btn btn-info text-white">
-                                <i class="fas fa-clipboard-list me-2"></i>Lista de Espera
-                            </button>
-                            <button class="btn btn-warning text-white">
-                                <i class="fas fa-user-injured me-2"></i>Urgencias
-                            </button>
-                            <a href="{% url 'listar_citas' %}" class="btn btn-outline-primary">
-                                <i class="fas fa-list me-2"></i>Ver Todos los Pacientes
-                            </a>
-                        </div>
-                    </div>
-
-                    <!-- Estadísticas Rápidas -->
-                    <div class="dashboard-card mt-4">
-                        <h5 class="text-primary-custom mb-3">
-                            <i class="fas fa-chart-line me-2"></i>Estadísticas del Mes
-                        </h5>
-                        
-                        <div class="row text-center">
-                            <div class="col-6 mb-3">
-                                <h4 class="text-success-custom">{{ total_citas|default:0 }}</h4>
-                                <small class="text-muted">Citas Totales</small>
-                            </div>
-                            <div class="col-6 mb-3">
-                                <h4 class="text-primary-custom">4.8</h4>
-                                <small class="text-muted">Valoración</small>
-                            </div>
-                            <div class="col-6">
-                                <h4 class="text-warning">{{ citas_pendientes|default:0 }}</h4>
-                                <small class="text-muted">Pendientes</small>
-                            </div>
-                            <div class="col-6">
-                                <h4 class="text-info">98%</h4>
-                                <small class="text-muted">Puntualidad</small>
+                    <!-- Estadísticas del Mes -->
+                    <div class="card card-custom ">
+                        <div class="card-body">
+                            <h5 class="text-primary mb-3">
+                                <i class="fas fa-chart-line me-2"></i>Este Mes
+                            </h5>
+                            
+                            <div class="row text-center g-3">
+                                <div class="col-6">
+                                    <div class="p-3 bg-light rounded">
+                                        <h4 class="text-success mb-0">{{ total_citas }}</h4>
+                                        <small class="text-muted">Total Citas</small>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="p-3 bg-light rounded">
+                                        <h4 class="text-warning mb-0">{{ citas_pendientes }}</h4>
+                                        <small class="text-muted">Pendientes</small>
+                                    </div>
+                                </div>
+                                <div class="col-12">
+                                    <div class="p-3 bg-light rounded">
+                                        <h4 class="text-primary mb-0">{{ total_pacientes }}</h4>
+                                        <small class="text-muted">Pacientes Atendidos</small>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
-
-                    <!-- Notas Rápidas -->
-                    <div class="dashboard-card mt-4">
-                        <h5 class="text-primary-custom mb-3">
-                            <i class="fas fa-sticky-note me-2"></i>Notas Rápidas
-                        </h5>
-                        
-                        <div class="mb-3">
-                            <textarea class="form-control" rows="4" placeholder="Escribe una nota rápida..."></textarea>
-                        </div>
-                        <div class="d-flex justify-content-between">
-                            <button class="btn btn-outline-primary btn-sm">
-                                <i class="fas fa-save me-1"></i>Guardar
-                            </button>
-                            <button class="btn btn-outline-secondary btn-sm">
-                                <i class="fas fa-list me-1"></i>Ver Todas
-                            </button>
-                        </div>
-                    </div>
-                </div>
+                </div> 
             </div>
         </div>
     </section>
+
 
     <!-- Modal Nueva Receta -->
     <div class="modal fade" id="recetaModal" tabindex="-1">
@@ -478,14 +388,14 @@
             <div class="row">
                 <div class="col-lg-4 col-md-6 mb-4">
                     <h5><i class="fas fa-stethoscope me-2"></i>miPosta</h5>
-                    <p class="text-muted">Sistema moderno de gestión de citas médicas.</p>
+                    <p class="text-mutedd">Sistema moderno de gestión de citas médicas.</p>
                 </div>
                 <div class="col-lg-4 col-md-6 mb-4">
                     <h5>Enlaces Rápidos</h5>
                     <ul class="list-unstyled">
-                        <li class="mb-2"><a href="{% url 'listar_citas' %}">Mis Citas</a></li>
-                        <li class="mb-2"><a href="#">Mis Pacientes</a></li>
-                        <li class="mb-2"><a href="#">Mi Horario</a></li>
+                        <li class="mb-2"><a href="{% url 'medico_mis_citas' %}">Mis Citas</a></li>
+                        <li class="mb-2"><a href="{% url 'medico_mis_pacientes' %}">Mis Pacientes</a></li>
+                        <li class="mb-2"><a href="{% url 'medico_horario' %}">Mi Horario</a></li>
                     </ul>
                 </div>
                 <div class="col-lg-4 col-md-6 mb-4">
@@ -499,7 +409,7 @@
             <hr class="my-4" style="opacity: 0.3;">
             <div class="row">
                 <div class="col-12 text-center">
-                    <p class="text-muted mb-0">&copy; 2024 miPosta. Todos los derechos reservados.</p>
+                    <p class="text-mutedd mb-0">&copy; 2024 miPosta. Todos los derechos reservados.</p>
                 </div>
             </div>
         </div>

@@ -1,11 +1,14 @@
 import logging
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.views.decorators.cache import never_cache
 from django.views.decorators.csrf import csrf_protect
 from django.utils import timezone
+from datetime import timedelta
+import json
+
 
 from .models import Usuario, Cita, Especialidad, Notificacion
 
@@ -154,21 +157,44 @@ def medico_dashboard(request):
         messages.error(request, 'No tienes permisos para acceder')
         return redirect('login')
 
+    # Fecha de hoy
     hoy_inicio = timezone.now().replace(hour=0, minute=0, second=0, microsecond=0)
     hoy_fin = hoy_inicio + timezone.timedelta(days=1)
 
+    # Citas de hoy
     citas_hoy = Cita.objects.filter(
         medico=request.user,
         fecha_hora__gte=hoy_inicio,
         fecha_hora__lt=hoy_fin
-    )
+    ).order_by('fecha_hora')
+
+    # Próximas citas (después de hoy, máximo 3)
+    ahora = timezone.now()
+    proximas_citas = Cita.objects.filter(
+        medico=request.user,
+        fecha_hora__gt=hoy_fin,
+        estado='PENDIENTE'
+    ).order_by('fecha_hora')[:3]
+
+    # Estadísticas
+    total_citas = Cita.objects.filter(medico=request.user).count()
+    citas_pendientes = Cita.objects.filter(medico=request.user, estado='PENDIENTE').count()
+    
+    # Total de pacientes únicos atendidos
+    total_pacientes = Cita.objects.filter(
+        medico=request.user
+    ).values('paciente').distinct().count()
 
     context = {
         'citas_hoy': citas_hoy,
-        'total_citas': Cita.objects.filter(medico=request.user).count(),
+        'proximas_citas': proximas_citas,
+        'total_citas': total_citas,
+        'citas_pendientes': citas_pendientes,
+        'total_pacientes': total_pacientes,
+        'today': timezone.now(),
     }
+    
     return render(request, 'medico/index.html', context)
-
 
 @login_required
 def paciente_dashboard(request):
@@ -334,8 +360,318 @@ def perfil_paciente(request):
         messages.error(request, 'No tienes permisos para acceder')
         return redirect('login')
 
+    if request.method == 'POST':
+        # Obtener datos del formulario
+        first_name = request.POST.get('first_name', '').strip()
+        last_name = request.POST.get('last_name', '').strip()
+        email = request.POST.get('email', '').strip()
+        telefono = request.POST.get('telefono', '').strip()
+        direccion = request.POST.get('direccion', '').strip()
+        fecha_nacimiento = request.POST.get('fecha_nacimiento', '')
+
+        # Validaciones
+        if not all([first_name, email]):
+            messages.error(request, 'El nombre y el email son obligatorios')
+            return render(request, 'paciente/pages/perfil.html', {'usuario': request.user})
+
+        # Verificar si el email ya existe (excepto el del usuario actual)
+        if Usuario.objects.filter(email=email).exclude(id=request.user.id).exists():
+            messages.error(request, 'El email ya está en uso por otro usuario')
+            return render(request, 'paciente/pages/perfil.html', {'usuario': request.user})
+
+        try:
+            # Actualizar datos del usuario
+            request.user.first_name = first_name
+            request.user.last_name = last_name
+            request.user.email = email
+            request.user.telefono = telefono
+            request.user.direccion = direccion
+            
+            if fecha_nacimiento:
+                request.user.fecha_nacimiento = fecha_nacimiento
+            
+            request.user.save()
+            
+            messages.success(request, '¡Perfil actualizado exitosamente!')
+            return redirect('perfil_paciente')
+            
+        except Exception as e:
+            logger.exception("Error al actualizar perfil")
+            messages.error(request, f'Error al actualizar perfil: {str(e)}')
+
     return render(
         request,
         'paciente/pages/perfil.html',
         {'usuario': request.user}
     )
+
+
+# ============================================================
+#                 SECCIONES DEL MÉDICO
+# ============================================================
+
+@login_required
+def medico_mis_citas(request):
+    if request.user.rol != 'MEDICO':
+        messages.error(request, 'No tienes permisos para acceder')
+        return redirect('login')
+
+    # Todas las citas del médico
+    citas = Cita.objects.filter(medico=request.user).order_by('-fecha_hora')
+    
+    # Filtros por estado
+    estado = request.GET.get('estado', '')
+    if estado:
+        citas = citas.filter(estado=estado)
+
+    context = {
+        'citas': citas,
+        'total_citas': citas.count(),
+    }
+    return render(request, 'medico/pages/mis_citas.html', context)
+
+
+@login_required
+def medico_mis_pacientes(request):
+    if request.user.rol != 'MEDICO':
+        messages.error(request, 'No tienes permisos para acceder')
+        return redirect('login')
+
+    # Obtener pacientes únicos del médico
+    pacientes_ids = Cita.objects.filter(
+        medico=request.user
+    ).values_list('paciente', flat=True).distinct()
+    
+    pacientes = Usuario.objects.filter(id__in=pacientes_ids)
+
+    context = {
+        'pacientes': pacientes,
+        'total_pacientes': pacientes.count(),
+    }
+    return render(request, 'medico/pages/mis_pacientes.html', context)
+
+
+@login_required
+def medico_horario(request):
+    if request.user.rol != 'MEDICO':
+        messages.error(request, 'No tienes permisos para acceder')
+        return redirect('login')
+
+    # Obtener citas de la semana
+    hoy = timezone.now().date()
+    inicio_semana = hoy - timezone.timedelta(days=hoy.weekday())
+    fin_semana = inicio_semana + timezone.timedelta(days=7)
+    
+    citas_semana = Cita.objects.filter(
+        medico=request.user,
+        fecha_hora__date__gte=inicio_semana,
+        fecha_hora__date__lt=fin_semana
+    ).order_by('fecha_hora')
+
+    context = {
+        'citas_semana': citas_semana,
+    }
+    return render(request, 'medico/pages/mi_horario.html', context)
+
+
+@login_required
+def medico_estadisticas(request):
+    if request.user.rol != 'MEDICO':
+        messages.error(request, 'No tienes permisos para acceder')
+        return redirect('login')
+
+    # Estadísticas generales
+    total_citas = Cita.objects.filter(medico=request.user).count()
+    citas_completadas = Cita.objects.filter(medico=request.user, estado='COMPLETADA').count()
+    citas_pendientes = Cita.objects.filter(medico=request.user, estado='PENDIENTE').count()
+    citas_canceladas = Cita.objects.filter(medico=request.user, estado='CANCELADA').count()
+    
+    total_pacientes = Cita.objects.filter(
+        medico=request.user
+    ).values('paciente').distinct().count()
+
+    context = {
+        'total_citas': total_citas,
+        'citas_completadas': citas_completadas,
+        'citas_pendientes': citas_pendientes,
+        'citas_canceladas': citas_canceladas,
+        'total_pacientes': total_pacientes,
+    }
+    return render(request, 'medico/pages/estadisticas.html', context)
+
+
+@login_required
+def medico_perfil(request):
+    if request.user.rol != 'MEDICO':
+        messages.error(request, 'No tienes permisos para acceder')
+        return redirect('login')
+
+    if request.method == 'POST':
+        first_name = request.POST.get('first_name', '').strip()
+        last_name = request.POST.get('last_name', '').strip()
+        email = request.POST.get('email', '').strip()
+        telefono = request.POST.get('telefono', '').strip()
+        direccion = request.POST.get('direccion', '').strip()
+
+        if not all([first_name, email]):
+            messages.error(request, 'El nombre y el email son obligatorios')
+            return render(request, 'medico/pages/perfil.html', {'usuario': request.user})
+
+        if Usuario.objects.filter(email=email).exclude(id=request.user.id).exists():
+            messages.error(request, 'El email ya está en uso')
+            return render(request, 'medico/pages/perfil.html', {'usuario': request.user})
+
+        try:
+            request.user.first_name = first_name
+            request.user.last_name = last_name
+            request.user.email = email
+            request.user.telefono = telefono
+            request.user.direccion = direccion
+            request.user.save()
+            
+            messages.success(request, '¡Perfil actualizado exitosamente!')
+            return redirect('medico_perfil')
+        except Exception as e:
+            logger.exception("Error al actualizar perfil")
+            messages.error(request, f'Error al actualizar perfil: {str(e)}')
+
+    return render(request, 'medico/pages/perfil.html', {'usuario': request.user})
+
+
+
+@login_required
+def medico_agregar_franja(request):
+    """
+    Maneja el POST desde el modal de 'Agregar Franja'.
+    Por ahora guarda los datos de forma mínima: valida y muestra un mensaje.
+    Si tienes un modelo Franja u otro storage, reemplaza la parte de creación.
+    """
+    if request.method != 'POST':
+        # Redirigir al horario si acceden por GET
+        return redirect('medico_horario')
+
+    # Solo médicos pueden acceder (según tu lógica)
+    if getattr(request.user, 'rol', None) != 'MEDICO':
+        messages.error(request, 'No tienes permisos para crear franjas')
+        return redirect('medico_horario')
+
+    dia = request.POST.get('dia')
+    hora_inicio = request.POST.get('hora_inicio')
+    hora_fin = request.POST.get('hora_fin')
+    tipo = request.POST.get('tipo')
+
+    # Validaciones básicas
+    if not all([dia, hora_inicio, hora_fin]):
+        messages.error(request, 'Completa los campos obligatorios para la franja')
+        return redirect('medico_horario')
+
+    # Aquí normalmente crearías la franja en la BD:
+    # Franja.objects.create(medico=request.user, dia=..., hora_inicio=..., hora_fin=..., tipo=...)
+    # Como ejemplo temporal simplemente mostramos mensaje de éxito:
+    messages.success(request, f'Franja agregada: {dia} {hora_inicio} - {hora_fin} ({tipo})')
+
+    return redirect('medico_horario')
+
+
+@login_required
+def medico_paciente_detail(request, pk):
+    """
+    Vista mínima de detalle de paciente.
+    Reemplaza o extiende según necesites mostrar ficha clínica.
+    """
+    if getattr(request.user, 'rol', None) != 'MEDICO':
+        messages.error(request, 'No tienes permiso para ver esta página')
+        return redirect('medico_dashboard')
+
+    paciente = get_object_or_404(Usuario, pk=pk, rol='PACIENTE')
+    # Por ahora renderiza una plantilla simple; crea medico/pages/paciente_detail.html si no existe.
+    context = {
+        'paciente': paciente,
+    }
+    return render(request, 'medico/pages/paciente_detail.html', context)
+
+
+@login_required
+def medico_agendar(request, pk):
+    """
+    Vista mínima para crear/mostrar el formulario de agendar cita para un paciente.
+    Si recibes POST, procesa la creación (o redirige al modal).
+    """
+    if getattr(request.user, 'rol', None) != 'MEDICO':
+        messages.error(request, 'No tienes permiso para agendar citas')
+        return redirect('medico_dashboard')
+
+    paciente = get_object_or_404(Usuario, pk=pk, rol='PACIENTE')
+
+    if request.method == 'POST':
+        # Aquí procesarías el formulario de creación de cita
+        # Por simplicidad devolvemos mensaje y redirigimos
+        messages.success(request, f'Cita creada (simulada) para {paciente.get_full_name() or paciente.username}')
+        return redirect('medico_mis_citas')
+
+    # GET -> mostrar un formulario o redirigir al listado
+    context = {'paciente': paciente}
+    return render(request, 'medico/pages/agendar_para_paciente.html', context)
+
+@login_required
+def medico_horario(request):
+    if getattr(request.user, 'rol', None) != 'MEDICO':
+        messages.error(request, 'No tienes permisos para acceder')
+        return redirect('login')
+
+    ahora = timezone.now()
+    # cargar citas del próximo mes (ajusta rango si quieres)
+    hasta = ahora + timedelta(days=30)
+
+    citas = Cita.objects.filter(
+        medico=request.user,
+        fecha_hora__gte=ahora,
+        fecha_hora__lte=hasta
+    ).order_by('fecha_hora')
+
+    # Construir lista de eventos para FullCalendar
+    calendar_events = []
+    DEFAULT_DURATION_MIN = 30
+    for c in citas:
+        start_iso = c.fecha_hora.isoformat()
+        # si no tienes duración, asumimos 30 minutos
+        end_dt = c.fecha_hora + timedelta(minutes=DEFAULT_DURATION_MIN)
+        end_iso = end_dt.isoformat()
+        calendar_events.append({
+            "id": c.id,
+            "title": f"Cita - {c.paciente.get_full_name() or c.paciente.username}",
+            "start": start_iso,
+            "end": end_iso,
+            "estado": c.estado,  # PENDIENTE, CONFIRMADA, CANCELADA...
+        })
+
+    # Serializar a JSON (cadena) para inyectar seguro en template
+    calendar_events_json = json.dumps(calendar_events, ensure_ascii=False)
+
+    # Construir semana mínima para la plantilla (si tu template la usa)
+    semana = []
+    for i in range(7):
+        d = (ahora + timedelta(days=i)).date()
+        semana.append({
+            "nombre": d.strftime("%A"),
+            "fecha": d,
+            "franjas": [],  # si tienes franjas, llena aquí
+        })
+
+    dias_semana = [
+        {"key": "MON", "nombre": "Lunes"},
+        {"key": "TUE", "nombre": "Martes"},
+        {"key": "WED", "nombre": "Miércoles"},
+        {"key": "THU", "nombre": "Jueves"},
+        {"key": "FRI", "nombre": "Viernes"},
+        {"key": "SAT", "nombre": "Sábado"},
+        {"key": "SUN", "nombre": "Domingo"},
+    ]
+
+    context = {
+        "calendar_events_json": calendar_events_json,
+        "semana": semana,
+        "dias_semana": dias_semana,
+        "today": ahora,
+    }
+    return render(request, 'medico/pages/mi_horario.html', context)
