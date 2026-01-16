@@ -55,15 +55,19 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'config.wsgi.application'
-
-# Database
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+    'default':  {
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'webmiposta',
+        'USER':  'root',
+        'PASSWORD': 'dominid', #cambiar por la contraseña real
+        'HOST': 'localhost',
+        'PORT':  '3306',
+        'OPTIONS': {
+            'charset': 'utf8mb4',
+        },
     }
 }
-
 # Custom User Model
 AUTH_USER_MODEL = 'core.Usuario'
 
